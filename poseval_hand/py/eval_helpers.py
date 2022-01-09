@@ -9,6 +9,7 @@ from convert import convert_videos
 MIN_SCORE = -9999
 MAX_TRACK_ID = 10000
 
+
 class Joint:
     def __init__(self):
         self.count = 21
@@ -36,73 +37,73 @@ class Joint:
         self.pinky_t = 20
 
         self.name = {}
-        self.name[self.wrist]    = "wrist"
-        self.name[self.thumb_k]  = "thumb_k"
-        self.name[self.thumb_b]  = "thumb_b"
-        self.name[self.thumb_m]  = "thumb_m"
-        self.name[self.thumb_t]  = "thumb_t"
-        self.name[self.index_k]  = "index_k"
-        self.name[self.index_b]  = "index_b"
-        self.name[self.index_m]  = "index_m"
-        self.name[self.index_t]  = "index_t"
+        self.name[self.wrist] = "wrist"
+        self.name[self.thumb_k] = "thumb_k"
+        self.name[self.thumb_b] = "thumb_b"
+        self.name[self.thumb_m] = "thumb_m"
+        self.name[self.thumb_t] = "thumb_t"
+        self.name[self.index_k] = "index_k"
+        self.name[self.index_b] = "index_b"
+        self.name[self.index_m] = "index_m"
+        self.name[self.index_t] = "index_t"
         self.name[self.middle_k] = "middle_k"
         self.name[self.middle_b] = "middle_b"
         self.name[self.middle_m] = "middle_m"
         self.name[self.middle_t] = "middle_t"
-        self.name[self.ring_k]   = "ring_k"
-        self.name[self.ring_b]   = "ring_b"
-        self.name[self.ring_m]   = "ring_m"
-        self.name[self.ring_t]   = "ring_t"
-        self.name[self.pinky_k]  = "pinky_k"
-        self.name[self.pinky_b]  = "pinky_b"
-        self.name[self.pinky_m]  = "pinky_m"
-        self.name[self.pinky_t]  = "pinky_t"
+        self.name[self.ring_k] = "ring_k"
+        self.name[self.ring_b] = "ring_b"
+        self.name[self.ring_m] = "ring_m"
+        self.name[self.ring_t] = "ring_t"
+        self.name[self.pinky_k] = "pinky_k"
+        self.name[self.pinky_b] = "pinky_b"
+        self.name[self.pinky_m] = "pinky_m"
+        self.name[self.pinky_t] = "pinky_t"
 
         self.symmetric_joint = {}
-        self.symmetric_joint[self.name[self.wrist]]    = -1
-        self.symmetric_joint[self.name[self.thumb_k]]  = -1
-        self.symmetric_joint[self.name[self.thumb_b]]  = -1
-        self.symmetric_joint[self.name[self.thumb_m]]  = -1
-        self.symmetric_joint[self.name[self.thumb_t]]  = -1
-        self.symmetric_joint[self.name[self.index_k]]  = -1
-        self.symmetric_joint[self.name[self.index_b]]  = -1
-        self.symmetric_joint[self.name[self.index_m]]  = -1
-        self.symmetric_joint[self.name[self.index_t]]  = -1
+        self.symmetric_joint[self.name[self.wrist]] = -1
+        self.symmetric_joint[self.name[self.thumb_k]] = -1
+        self.symmetric_joint[self.name[self.thumb_b]] = -1
+        self.symmetric_joint[self.name[self.thumb_m]] = -1
+        self.symmetric_joint[self.name[self.thumb_t]] = -1
+        self.symmetric_joint[self.name[self.index_k]] = -1
+        self.symmetric_joint[self.name[self.index_b]] = -1
+        self.symmetric_joint[self.name[self.index_m]] = -1
+        self.symmetric_joint[self.name[self.index_t]] = -1
         self.symmetric_joint[self.name[self.middle_k]] = -1
         self.symmetric_joint[self.name[self.middle_b]] = -1
         self.symmetric_joint[self.name[self.middle_m]] = -1
         self.symmetric_joint[self.name[self.middle_t]] = -1
-        self.symmetric_joint[self.name[self.ring_k]]   = -1
-        self.symmetric_joint[self.name[self.ring_b]]   = -1
-        self.symmetric_joint[self.name[self.ring_m]]   = -1
-        self.symmetric_joint[self.name[self.ring_t]]   = -1
-        self.symmetric_joint[self.name[self.pinky_k]]  = -1
-        self.symmetric_joint[self.name[self.pinky_b]]  = -1
-        self.symmetric_joint[self.name[self.pinky_m]]  = -1
-        self.symmetric_joint[self.name[self.pinky_t]]  = -1
+        self.symmetric_joint[self.name[self.ring_k]] = -1
+        self.symmetric_joint[self.name[self.ring_b]] = -1
+        self.symmetric_joint[self.name[self.ring_m]] = -1
+        self.symmetric_joint[self.name[self.ring_t]] = -1
+        self.symmetric_joint[self.name[self.pinky_k]] = -1
+        self.symmetric_joint[self.name[self.pinky_b]] = -1
+        self.symmetric_joint[self.name[self.pinky_m]] = -1
+        self.symmetric_joint[self.name[self.pinky_t]] = -1
 
-def getPointGTbyID(points,pidx):
 
+def getPointGTbyID(points, pidx):
     point = []
     for i in range(len(points)):
-        if (points[i]["id"] != None and points[i]["id"][0] == pidx): # if joint id matches
+        if points[i]["id"] != None and points[i]["id"][0] == pidx:  # if joint id matches
             point = points[i]
             break
 
     return point
 
 
-def getHeadSize(x1,y1,x2,y2):
-    #(Note by Nate - 9/10/2020) Too large of a "headSize" caused many false matches when 
-    #calculating shortest distances
-    #Tough to get some good reference measurement. I can go for the tip of the thumb
-    #which is about ~0.2 the size of the bounding box for a full hand.
+def getHeadSize(x1, y1, x2, y2):
+    # (Note by Nate - 9/10/2020) Too large of a "headSize" caused many false matches when
+    # calculating shortest distances
+    # Tough to get some good reference measurement. I can go for the tip of the thumb
+    # which is about ~0.2 the size of the bounding box for a full hand.
 
-    headSize = 0.2*np.linalg.norm(np.subtract([x2,y2],[x1,y1]));
+    headSize = 0.2 * np.linalg.norm(np.subtract([x2, y2], [x1, y1]));
     return headSize
 
 
-def formatCell(val,delim):
+def formatCell(val, delim):
     return "{:>5}".format("%1.1f" % val) + delim
 
 
@@ -114,7 +115,7 @@ def getHeader():
     strHeader += " Middle &"
     strHeader += " Ring &"
     strHeader += " Pinky &"
-    strHeader += " Total%s" % ("\\"+"\\")
+    strHeader += " Total%s" % ("\\" + "\\")
     return strHeader
 
 
@@ -129,7 +130,7 @@ def getMotHeader():
     strHeader += " MOTA &"
     strHeader += " MOTP &"
     strHeader += " Prec &"
-    strHeader += " Rec  %s\n" % ("\\"+"\\")
+    strHeader += " Rec  %s\n" % ("\\" + "\\")
     strHeader += "&"
     strHeader += " Wrist &"
     strHeader += " Thumb &"
@@ -140,188 +141,185 @@ def getMotHeader():
     strHeader += " Total&"
     strHeader += " Total&"
     strHeader += " Total&"
-    strHeader += " Total%s" % ("\\"+"\\")
+    strHeader += " Total%s" % ("\\" + "\\")
 
     return strHeader
 
 
 def getCum(vals):
-    cum = []; n = -1
-    cum += [(vals[[Joint().wrist],0].mean())]
-    cum += [(vals[[Joint().thumb_k, Joint().thumb_b, Joint().thumb_m, Joint().thumb_t],0].mean())]
-    cum += [(vals[[Joint().index_k, Joint().index_b, Joint().index_m, Joint().index_t],0].mean())]
-    cum += [(vals[[Joint().middle_k, Joint().middle_b, Joint().middle_m, Joint().middle_t],0].mean())]
-    cum += [(vals[[Joint().ring_k, Joint().ring_b, Joint().ring_m, Joint().ring_t],0].mean())]
-    cum += [(vals[[Joint().pinky_k, Joint().pinky_b, Joint().pinky_m, Joint().pinky_t],0].mean())]
-    for i in range(Joint().count,len(vals)):
-        cum += [vals[i,0]]
+    cum = [];
+    -1
+    cum += [(vals[[Joint().wrist], 0].mean())]
+    cum += [(vals[[Joint().thumb_k, Joint().thumb_b, Joint().thumb_m, Joint().thumb_t], 0].mean())]
+    cum += [(vals[[Joint().index_k, Joint().index_b, Joint().index_m, Joint().index_t], 0].mean())]
+    cum += [(vals[[Joint().middle_k, Joint().middle_b, Joint().middle_m, Joint().middle_t], 0].mean())]
+    cum += [(vals[[Joint().ring_k, Joint().ring_b, Joint().ring_m, Joint().ring_t], 0].mean())]
+    cum += [(vals[[Joint().pinky_k, Joint().pinky_b, Joint().pinky_m, Joint().pinky_t], 0].mean())]
+    for i in range(Joint().count, len(vals)):
+        cum += [vals[i, 0]]
     return cum
 
 
 def getFormatRow(cum):
     row = "&"
-    for i in range(len(cum)-1):
-        row += formatCell(cum[i]," &")
-    row += formatCell(cum[len(cum)-1],(" %s" % "\\"+"\\"))
+    for i in range(len(cum) - 1):
+        row += formatCell(cum[i], " &")
+    row += formatCell(cum[len(cum) - 1], (" %s" % "\\" + "\\"))
     return row
 
 
-def printTable(vals,motHeader=False):
-
+def printTable(vals, motHeader=False):
     cum = getCum(vals)
     row = getFormatRow(cum)
-    if (motHeader):
+    if motHeader:
         header = getMotHeader()
     else:
         header = getHeader()
     print(header)
     print(row)
-    return header+"\n", row+"\n"
+    return header + "\n", row + "\n"
 
 
-def printTableTracking(valsPerPart):
-
+def printTableTracking():
     cum = getCum(vals)
     row = getFormatRow(cum)
     print(getHeader())
     print(row)
-    return getHeader()+"\n", row+"\n"
+    return getHeader() + "\n", row + "\n"
 
 
 # compute recall/precision curve (RPC) values
-def computeRPC(scores,labels,totalPos):
-
+def computeRPC(scores, labels, totalPos):
     precision = np.zeros(len(scores))
-    recall    = np.zeros(len(scores))
+    recall = np.zeros(len(scores))
     npos = 0;
 
     idxsSort = np.array(scores).argsort()[::-1]
     labelsSort = labels[idxsSort];
 
     for sidx in range(len(idxsSort)):
-        if (labelsSort[sidx] == 1):
+        if labelsSort[sidx] == 1:
             npos += 1
         # recall: how many true positives were found out of the total number of positives?
-        recall[sidx]    = 1.0*npos / totalPos
+        recall[sidx] = 1.0 * npos / totalPos
         # precision: how many true positives were found out of the total number of samples?
-        precision[sidx] = 1.0*npos / (sidx + 1)
+        precision[sidx] = 1.0 * npos / (sidx + 1)
 
     return precision, recall, idxsSort
 
 
 # compute Average Precision using recall/precision values
-def VOCap(rec,prec):
+def VOCap(rec, prec):
+    mpre = np.zeros([1, 2 + len(prec)])
+    mpre[0, 1:len(prec) + 1] = prec
+    mrec = np.zeros([1, 2 + len(rec)])
+    mrec[0, 1:len(rec) + 1] = rec
+    mrec[0, len(rec) + 1] = 1.0
 
-    mpre = np.zeros([1,2+len(prec)])
-    mpre[0,1:len(prec)+1] = prec
-    mrec = np.zeros([1,2+len(rec)])
-    mrec[0,1:len(rec)+1] = rec
-    mrec[0,len(rec)+1] = 1.0
+    for i in range(mpre.size - 2, -1, -1):
+        mpre[0, i] = max(mpre[0, i], mpre[0, i + 1])
 
-    for i in range(mpre.size-2,-1,-1):
-        mpre[0,i] = max(mpre[0,i],mpre[0,i+1])
-
-    i = np.argwhere( ~np.equal( mrec[0,1:], mrec[0,:mrec.shape[1]-1]) )+1
+    i = np.argwhere(~np.equal(mrec[0, 1:], mrec[0, :mrec.shape[1] - 1])) + 1
     i = i.flatten()
 
     # compute area under the curve
-    ap = np.sum( np.multiply( np.subtract( mrec[0,i], mrec[0,i-1]), mpre[0,i] ) )
+    ap = np.sum(np.multiply(np.subtract(mrec[0, i], mrec[0, i - 1]), mpre[0, i]))
 
     return ap
 
+
 def get_data_dir():
-  dataDir = "./"
-  return dataDir
+    dataDir = "./"
+    return dataDir
+
 
 def help(msg=''):
-  sys.stderr.write(msg+'\n')
-  exit()
+    sys.stderr.write(msg + '\n')
+    exit()
+
 
 def process_arguments(argv):
+    mode = 'multi'
 
-  mode = 'multi'
+    if len(argv) > 3:
+        mode = str.lower(argv[3])
+    elif len(argv) < 3 or len(argv) > 4:
+        help()
 
-  if len(argv) > 3:
-    mode   = str.lower(argv[3])
-  elif len(argv)<3 or len(argv)>4:
-    help()
+    gt_file = argv[1]
+    pred_file = argv[2]
 
-  gt_file = argv[1]
-  pred_file = argv[2]
+    if not os.path.exists(gt_file):
+        help('Given ground truth directory does not exist!\n')
 
-  if not os.path.exists(gt_file):
-    help('Given ground truth directory does not exist!\n')
+    if not os.path.exists(pred_file):
+        help('Given prediction directory does not exist!\n')
 
-  if not os.path.exists(pred_file):
-    help('Given prediction directory does not exist!\n')
+    return gt_file, pred_file, mode
 
-  return gt_file, pred_file, mode
 
 def process_arguments_server(argv):
-  mode = 'multi'
+    'multi'
 
-  print(len(argv))
-  assert(len(argv) == 10, "Wrong number of arguments")
+    print(len(argv))
+    assert (len(argv) == 10, "Wrong number of arguments")
 
-  gt_dir = argv[1]
-  pred_dir = argv[2]
-  mode   = str.lower(argv[3])
-  evaltrack = argv[4]
-  shortname = argv[5]
-  chl = argv[6]
-  shortname_uid = argv[7]
-  shakey = argv[8]
-  timestamp = argv[9]
-  if not os.path.exists(gt_dir):
-    help('Given ground truth does not exist!\n')
+    gt_dir = argv[1]
+    pred_dir = argv[2]
+    mode = str.lower(argv[3])
+    evaltrack = argv[4]
+    shortname = argv[5]
+    chl = argv[6]
+    shortname_uid = argv[7]
+    shakey = argv[8]
+    timestamp = argv[9]
+    if not os.path.exists(gt_dir):
+        help('Given ground truth does not exist!\n')
 
-  if not os.path.exists(pred_dir):
-    help('Given prediction does not exist!\n')
+    if not os.path.exists(pred_dir):
+        help('Given prediction does not exist!\n')
 
-  return gt_dir, pred_dir, mode, evaltrack, shortname, chl, shortname_uid, shakey, timestamp
+    return gt_dir, pred_dir, mode, evaltrack, shortname, chl, shortname_uid, shakey, timestamp
 
 
 def load_data(argv):
+    dataDir = get_data_dir()
 
-  dataDir = get_data_dir()
+    gt_file, pred_file, mode = process_arguments(argv)
+    gtFilename = dataDir + gt_file
+    predFilename = dataDir + pred_file
 
-  gt_file, pred_file, mode = process_arguments(argv)
-  gtFilename = dataDir + gt_file
-  predFilename = dataDir + pred_file
+    # load ground truth (GT)
+    with open(gtFilename) as data_file:
+        data = json.load(data_file)
+    gtFramesAll = data
 
-  # load ground truth (GT)
-  with open(gtFilename) as data_file:
-      data = json.load(data_file)
-  gtFramesAll = data
+    # load predictions
+    with open(predFilename) as data_file:
+        data = json.load(data_file)
+    prFramesAll = data
 
-  # load predictions
-  with open(predFilename) as data_file:
-      data = json.load(data_file)
-  prFramesAll = data
-
-  return gtFramesAll, prFramesAll
-
-
-def cleanupData(gtFramesAll,prFramesAll):
-
-  # remove all GT frames with empty annorects and remove corresponding entries from predictions
-  imgidxs = []
-  for imgidx in range(len(gtFramesAll)):
-    if (len(gtFramesAll[imgidx]["annorect"]) > 0):
-      imgidxs += [imgidx]
-  gtFramesAll = [gtFramesAll[imgidx] for imgidx in imgidxs]
-  prFramesAll = [prFramesAll[imgidx] for imgidx in imgidxs]
-
-  # remove all gt rectangles that do not have annotations
-  for imgidx in range(len(gtFramesAll)):
-    gtFramesAll[imgidx]["annorect"] = removeRectsWithoutPoints(gtFramesAll[imgidx]["annorect"])
-    prFramesAll[imgidx]["annorect"] = removeRectsWithoutPoints(prFramesAll[imgidx]["annorect"])
-
-  return gtFramesAll, prFramesAll
+    return gtFramesAll, prFramesAll
 
 
-def removeIgnoredPointsRects(rects,polyList):
+def cleanupData(gtFramesAll, prFramesAll):
+    # remove all GT frames with empty annorects and remove corresponding entries from predictions
+    imgidxs = []
+    for imgidx in range(len(gtFramesAll)):
+        if len(gtFramesAll[imgidx]["annorect"]) > 0:
+            imgidxs += [imgidx]
+    gtFramesAll = [gtFramesAll[imgidx] for imgidx in imgidxs]
+    prFramesAll = [prFramesAll[imgidx] for imgidx in imgidxs]
 
+    # remove all gt rectangles that do not have annotations
+    for imgidx in range(len(gtFramesAll)):
+        gtFramesAll[imgidx]["annorect"] = removeRectsWithoutPoints(gtFramesAll[imgidx]["annorect"])
+        prFramesAll[imgidx]["annorect"] = removeRectsWithoutPoints(prFramesAll[imgidx]["annorect"])
+
+    return gtFramesAll, prFramesAll
+
+
+def removeIgnoredPointsRects(rects, polyList):
     ridxs = list(range(len(rects)))
     for ridx in range(len(rects)):
         points = rects[ridx]["annopoints"][0]["point"]
@@ -331,13 +329,13 @@ def removeIgnoredPointsRects(rects,polyList):
             bIgnore = False
             for poidx in range(len(polyList)):
                 poly = polyList[poidx]
-                if (poly.contains(pt)):
+                if poly.contains(pt):
                     bIgnore = True
                     break
-            if (bIgnore):
+            if bIgnore:
                 pidxs.remove(pidx)
         points = [points[pidx] for pidx in pidxs]
-        if (len(points) > 0):
+        if len(points) > 0:
             rects[ridx]["annopoints"][0]["point"] = points
         else:
             ridxs.remove(ridx)
@@ -345,12 +343,11 @@ def removeIgnoredPointsRects(rects,polyList):
     return rects
 
 
-def removeIgnoredPoints(gtFramesAll,prFramesAll):
-
-    imgidxs = []
+def removeIgnoredPoints(gtFramesAll, prFramesAll):
+    []
     for imgidx in range(len(gtFramesAll)):
         if ("ignore_regions" in gtFramesAll[imgidx].keys() and
-            len(gtFramesAll[imgidx]["ignore_regions"]) > 0):
+                len(gtFramesAll[imgidx]["ignore_regions"]) > 0):
             regions = gtFramesAll[imgidx]["ignore_regions"]
             polyList = []
             for ridx in range(len(regions)):
@@ -363,9 +360,9 @@ def removeIgnoredPoints(gtFramesAll,prFramesAll):
                 polyList += [poly]
 
             rects = prFramesAll[imgidx]["annorect"]
-            prFramesAll[imgidx]["annorect"] = removeIgnoredPointsRects(rects,polyList)
+            prFramesAll[imgidx]["annorect"] = removeIgnoredPointsRects(rects, polyList)
             rects = gtFramesAll[imgidx]["annorect"]
-            gtFramesAll[imgidx]["annorect"] = removeIgnoredPointsRects(rects,polyList)
+            gtFramesAll[imgidx]["annorect"] = removeIgnoredPointsRects(rects, polyList)
 
     return gtFramesAll, prFramesAll
 
@@ -377,79 +374,78 @@ def rectHasPoints(rect):
 
 
 def removeRectsWithoutPoints(rects):
+    idxsPr = []
+    for ridxPr in range(len(rects)):
+        if rectHasPoints(rects[ridxPr]):
+            idxsPr += [ridxPr];
+    rects = [rects[ridx] for ridx in idxsPr]
+    return rects
 
-  idxsPr = []
-  for ridxPr in range(len(rects)):
-    if (rectHasPoints(rects[ridxPr])):
-        idxsPr += [ridxPr];
-  rects = [rects[ridx] for ridx in idxsPr]
-  return rects
 
 def load_data_dir(argv):
+    gt_dir, pred_dir, mode = process_arguments(argv)
+    if not os.path.exists(gt_dir):
+        help('Given GT directory ' + gt_dir + ' does not exist!\n')
+    if not os.path.exists(pred_dir):
+        help('Given prediction directory ' + pred_dir + ' does not exist!\n')
+    filenames = glob.glob(gt_dir + "/*.json")
+    gtFramesAll = []
+    prFramesAll = []
 
-  gt_dir, pred_dir, mode = process_arguments(argv)
-  if not os.path.exists(gt_dir):
-    help('Given GT directory ' + gt_dir + ' does not exist!\n')
-  if not os.path.exists(pred_dir):
-    help('Given prediction directory ' + pred_dir + ' does not exist!\n')
-  filenames = glob.glob(gt_dir + "/*.json")
-  gtFramesAll = []
-  prFramesAll = []
+    for i in range(len(filenames)):
+        # load each annotation json file
+        with open(filenames[i]) as data_file:
+            data = json.load(data_file)
+        if not "annolist" in data:
+            data = convert_videos(data)[0]
+        gt = data["annolist"]
+        for imgidx in range(len(gt)):
+            gt[imgidx]["seq_id"] = i
+            gt[imgidx]["seq_name"] = os.path.basename(filenames[i]).split('.')[0]
+            for ridxGT in range(len(gt[imgidx]["annorect"])):
+                if "track_id" in gt[imgidx]["annorect"][ridxGT].keys():
+                    # adjust track_ids to make them unique across all sequences
+                    assert (gt[imgidx]["annorect"][ridxGT]["track_id"][0] < MAX_TRACK_ID)
+                    gt[imgidx]["annorect"][ridxGT]["track_id"][0] += i * MAX_TRACK_ID
+        gtFramesAll += gt
+        gtBasename = os.path.basename(filenames[i])
+        predFilename = pred_dir + gtBasename
 
-  for i in range(len(filenames)):
-    # load each annotation json file
-    with open(filenames[i]) as data_file:
-        data = json.load(data_file)
-    if (not "annolist" in data):
-        data = convert_videos(data)[0]
-    gt = data["annolist"]
-    for imgidx in range(len(gt)):
-        gt[imgidx]["seq_id"] = i
-        gt[imgidx]["seq_name"] = os.path.basename(filenames[i]).split('.')[0]
-        for ridxGT in range(len(gt[imgidx]["annorect"])):
-            if ("track_id" in gt[imgidx]["annorect"][ridxGT].keys()):
-                # adjust track_ids to make them unique across all sequences
-                assert(gt[imgidx]["annorect"][ridxGT]["track_id"][0] < MAX_TRACK_ID)
-                gt[imgidx]["annorect"][ridxGT]["track_id"][0] += i*MAX_TRACK_ID
-    gtFramesAll += gt
-    gtBasename = os.path.basename(filenames[i])
-    predFilename = pred_dir + gtBasename
+        if not os.path.exists(predFilename):
+            raise IOError('Prediction file ' + predFilename + ' does not exist')
 
-    if (not os.path.exists(predFilename)):
-        raise IOError('Prediction file ' + predFilename + ' does not exist')
+        # load predictions
+        with open(predFilename) as data_file:
+            data = json.load(data_file)
+        if not "annolist" in data:
+            data = convert_videos(data)[0]
+        pr = data["annolist"]
+        if len(pr) != len(gt):
+            raise Exception('# prediction frames %d != # GT frames %d for %s' % (len(pr), len(gt), predFilename))
+        for imgidx in range(len(pr)):
+            track_id_frame = []
+            for ridxPr in range(len(pr[imgidx]["annorect"])):
+                if "track_id" in pr[imgidx]["annorect"][ridxPr].keys():
+                    track_id = pr[imgidx]["annorect"][ridxPr]["track_id"][0]
+                    track_id_frame += [track_id]
+                    # adjust track_ids to make them unique across all sequences
+                    assert (track_id < MAX_TRACK_ID)
+                    pr[imgidx]["annorect"][ridxPr]["track_id"][0] += i * MAX_TRACK_ID
+            track_id_frame_unique = np.unique(np.array(track_id_frame)).tolist()
+            if len(track_id_frame) != len(track_id_frame_unique):
+                raise Exception('Non-unique tracklet IDs found in frame %s of prediction %s' % (pr[imgidx]["image"][0]["name"], predFilename))
+        prFramesAll += pr
 
-    # load predictions
-    with open(predFilename) as data_file:
-        data = json.load(data_file)
-    if (not "annolist" in data):
-        data = convert_videos(data)[0]
-    pr = data["annolist"]
-    if (len(pr) != len(gt)):
-        raise Exception('# prediction frames %d != # GT frames %d for %s' % (len(pr),len(gt),predFilename))
-    for imgidx in range(len(pr)):
-        track_id_frame = []
-        for ridxPr in range(len(pr[imgidx]["annorect"])):
-            if ("track_id" in pr[imgidx]["annorect"][ridxPr].keys()):
-                track_id = pr[imgidx]["annorect"][ridxPr]["track_id"][0]
-                track_id_frame += [track_id]
-                # adjust track_ids to make them unique across all sequences
-                assert(track_id < MAX_TRACK_ID)
-                pr[imgidx]["annorect"][ridxPr]["track_id"][0] += i*MAX_TRACK_ID
-        track_id_frame_unique = np.unique(np.array(track_id_frame)).tolist()
-        if (len(track_id_frame) != len(track_id_frame_unique)):
-            raise Exception('Non-unique tracklet IDs found in frame %s of prediction %s' % (pr[imgidx]["image"][0]["name"],predFilename))
-    prFramesAll += pr
+    gtFramesAll, prFramesAll = cleanupData(gtFramesAll, prFramesAll)
 
-  gtFramesAll,prFramesAll = cleanupData(gtFramesAll,prFramesAll)
+    gtFramesAll, prFramesAll = removeIgnoredPoints(gtFramesAll, prFramesAll)
 
-  gtFramesAll,prFramesAll = removeIgnoredPoints(gtFramesAll,prFramesAll)
-
-  return gtFramesAll, prFramesAll
+    return gtFramesAll, prFramesAll
 
 
-def writeJson(val,fname):
-  with open(fname, 'w') as data_file:
-    json.dump(val, data_file)
+def writeJson(val, fname):
+    with open(fname, 'w') as data_file:
+        json.dump(val, data_file)
 
 
 def assignGTmulti(gtFrames, prFrames, distThresh):
@@ -470,10 +466,10 @@ def assignGTmulti(gtFrames, prFrames, distThresh):
             labelsAll[pidx][imgidx] = np.zeros([0, 0], dtype=np.int8)
 
     # GT track IDs
-    trackidxGT = []
+    []
 
     # prediction track IDs
-    trackidxPr = []
+    []
 
     # number of GT poses
     nGTPeople = np.zeros((len(gtFrames), 1))
@@ -498,7 +494,7 @@ def assignGTmulti(gtFrames, prFrames, distThresh):
         idxsPr = []
         for ridxPr in range(len(prFrames[imgidx]["annorect"])):
             if (("annopoints" in prFrames[imgidx]["annorect"][ridxPr].keys()) and
-                ("point" in prFrames[imgidx]["annorect"][ridxPr]["annopoints"][0].keys())):
+                    ("point" in prFrames[imgidx]["annorect"][ridxPr]["annopoints"][0].keys())):
                 idxsPr += [ridxPr];
         prFrames[imgidx]["annorect"] = [prFrames[imgidx]["annorect"][ridx] for ridx in idxsPr]
 
@@ -508,7 +504,7 @@ def assignGTmulti(gtFrames, prFrames, distThresh):
         for ridxGT in range(len(gtFrames[imgidx]["annorect"])):
             # GT pose
             rectGT = gtFrames[imgidx]["annorect"][ridxGT]
-            if ("track_id" in rectGT.keys()):
+            if "track_id" in rectGT.keys():
                 trackidxGT += [rectGT["track_id"][0]]
             pointsGT = []
             if len(rectGT["annopoints"]) > 0:
@@ -524,7 +520,7 @@ def assignGTmulti(gtFrames, prFrames, distThresh):
         for ridxPr in range(len(prFrames[imgidx]["annorect"])):
             # predicted pose
             rectPr = prFrames[imgidx]["annorect"][ridxPr]
-            if ("track_id" in rectPr.keys()):
+            if "track_id" in rectPr.keys():
                 trackidxPr += [rectPr["track_id"][0]]
             pointsPr = rectPr["annopoints"][0]["point"]
             for i in range(nJoints):
@@ -533,7 +529,7 @@ def assignGTmulti(gtFrames, prFrames, distThresh):
                 if len(ppPr) > 0:
                     if not ("score" in ppPr.keys()):
                         # use minimum score if predicted score is missing
-                        if (imgidx == 0):
+                        if imgidx == 0:
                             print('WARNING: prediction score is missing. Setting fallback score={}'.format(MIN_SCORE))
                         score[ridxPr, i] = MIN_SCORE
                     else:
@@ -548,7 +544,7 @@ def assignGTmulti(gtFrames, prFrames, distThresh):
                 rectGT = gtFrames[imgidx]["annorect"][ridxGT]
                 # compute reference distance as head size
                 headSize = getHeadSize(rectGT["x1"][0], rectGT["y1"][0],
-                                                    rectGT["x2"][0], rectGT["y2"][0])
+                                       rectGT["x2"][0], rectGT["y2"][0])
                 pointsGT = []
                 if len(rectGT["annopoints"]) > 0:
                     pointsGT = rectGT["annopoints"][0]["point"]
@@ -584,10 +580,10 @@ def assignGTmulti(gtFrames, prFrames, distThresh):
 
             # preserve best GT match only
             idx = np.argmax(pck, axis=1)
-            val = np.max(pck, axis=1)
+            np.max(pck, axis=1)
             for ridxPr in range(pck.shape[0]):
                 for ridxGT in range(pck.shape[1]):
-                    if (ridxGT != idx[ridxPr]):
+                    if ridxGT != idx[ridxPr]:
                         pck[ridxPr, ridxGT] = 0
             prToGT = np.argmax(pck, axis=0)
             val = np.max(pck, axis=0)
@@ -599,30 +595,32 @@ def assignGTmulti(gtFrames, prFrames, distThresh):
                 mot[i] = {}
 
             for i in range(nJoints):
-                ridxsGT = np.argwhere(hasGT[:,i] == True); ridxsGT = ridxsGT.flatten().tolist()
-                ridxsPr = np.argwhere(hasPr[:,i] == True); ridxsPr = ridxsPr.flatten().tolist()
+                ridxsGT = np.argwhere(hasGT[:, i] == True);
+                ridxsGT = ridxsGT.flatten().tolist()
+                ridxsPr = np.argwhere(hasPr[:, i] == True);
+                ridxsPr = ridxsPr.flatten().tolist()
                 mot[i]["trackidxGT"] = [trackidxGT[idx] for idx in ridxsGT]
                 mot[i]["trackidxPr"] = [trackidxPr[idx] for idx in ridxsPr]
                 mot[i]["ridxsGT"] = np.array(ridxsGT)
                 mot[i]["ridxsPr"] = np.array(ridxsPr)
-                mot[i]["dist"] = np.full((len(ridxsGT),len(ridxsPr)),np.nan)
+                mot[i]["dist"] = np.full((len(ridxsGT), len(ridxsPr)), np.nan)
                 for iPr in range(len(ridxsPr)):
                     for iGT in range(len(ridxsGT)):
-                        if (match[ridxsPr[iPr], ridxsGT[iGT], i]):
-                            mot[i]["dist"][iGT,iPr] = dist[ridxsPr[iPr], ridxsGT[iGT], i]
+                        if match[ridxsPr[iPr], ridxsGT[iGT], i]:
+                            mot[i]["dist"][iGT, iPr] = dist[ridxsPr[iPr], ridxsGT[iGT], i]
 
             # assign predicted poses to GT poses
             for ridxPr in range(hasPr.shape[0]):
-                if (ridxPr in prToGT):  # pose matches to GT
+                if ridxPr in prToGT:  # pose matches to GT
                     # GT pose that matches the predicted pose
                     ridxGT = np.argwhere(prToGT == ridxPr)
-                    assert(ridxGT.size == 1)
-                    ridxGT = ridxGT[0,0]
+                    assert (ridxGT.size == 1)
+                    ridxGT = ridxGT[0, 0]
                     s = score[ridxPr, :]
                     m = np.squeeze(match[ridxPr, ridxGT, :])
                     hp = hasPr[ridxPr, :]
                     for i in range(len(hp)):
-                        if (hp[i]):
+                        if hp[i]:
                             scoresAll[i][imgidx] = np.append(scoresAll[i][imgidx], s[i])
                             labelsAll[i][imgidx] = np.append(labelsAll[i][imgidx], m[i])
 
@@ -631,7 +629,7 @@ def assignGTmulti(gtFrames, prFrames, distThresh):
                     m = np.zeros([match.shape[2], 1], dtype=bool)
                     hp = hasPr[ridxPr, :]
                     for i in range(len(hp)):
-                        if (hp[i]):
+                        if hp[i]:
                             scoresAll[i][imgidx] = np.append(scoresAll[i][imgidx], s[i])
                             labelsAll[i][imgidx] = np.append(labelsAll[i][imgidx], m[i])
         else:
@@ -655,7 +653,7 @@ def assignGTmulti(gtFrames, prFrames, distThresh):
                 mot[i]["trackidxPr"] = [0]
                 mot[i]["ridxsGT"] = np.array(ridxsGT)
                 mot[i]["ridxsPr"] = np.array(ridxsPr)
-                mot[i]["dist"] = np.full((len(ridxsGT),len(ridxsPr)),np.nan)
+                mot[i]["dist"] = np.full((len(ridxsGT), len(ridxsPr)), np.nan)
 
         # save number of GT joints
         for ridxGT in range(hasGT.shape[0]):

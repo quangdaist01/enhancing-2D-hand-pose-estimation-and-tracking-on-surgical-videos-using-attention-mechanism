@@ -1,4 +1,4 @@
-'''
+"""
     Author: Guanghan Ning
     E-mail: guanghan.ning@jd.com
     October 22th, 2018
@@ -7,7 +7,7 @@
 
     Largely borrowed from:
     https://github.com/yysijie/st-gcn/blob/master/net/st_gcn.py
-'''
+"""
 
 import torch
 import torch.nn as nn
@@ -41,10 +41,10 @@ class GCN(nn.Module):
         super(GCN, self).__init__()
 
         self.train_transforms = None
-        self.test_transforms  = None
+        self.test_transforms = None
 
         # load graph
-        layout   = kwargs['layout']
+        layout = kwargs['layout']
         strategy = kwargs['partition_strategy']
         self.vis_embed = kwargs['gcn_vis_embed']
 
@@ -58,15 +58,15 @@ class GCN(nn.Module):
         kernel_size = (temporal_kernel_size, spatial_kernel_size)
         self.data_bn = nn.BatchNorm1d(in_channels * A.size(1))
         self.st_gcn_networks = nn.ModuleList((
-            st_gcn(in_channels, 64, kernel_size, 1, residual=False),
-            st_gcn(64, 64, kernel_size, 1),
+                st_gcn(in_channels, 64, kernel_size, 1, residual=False),
+                st_gcn(64, 64, kernel_size, 1),
         ))
 
         # initialize parameters for edge importance weighting
         if edge_importance_weighting:
             self.edge_importance = nn.ParameterList([
-                nn.Parameter(torch.ones(self.A.size()))
-                for i in self.st_gcn_networks
+                    nn.Parameter(torch.ones(self.A.size()))
+                    for _ in self.st_gcn_networks
             ])
         else:
             self.edge_importance = [1] * len(self.st_gcn_networks)
@@ -75,11 +75,11 @@ class GCN(nn.Module):
         self.fcn = nn.Conv2d(64, 128, kernel_size=1)
 
         self.joint_embed = nn.Sequential(
-                            nn.Linear(128 + 64, 128 + 64),
-                            nn.ReLU(),
-                            nn.Linear(128 + 64, 128 + 64))
-                                        
-    def forward(self, feat1, x1, feat2, x2): 
+                nn.Linear(128 + 64, 128 + 64),
+                nn.ReLU(),
+                nn.Linear(128 + 64, 128 + 64))
+
+    def forward(self, feat1, x1, feat2, x2):
         embed1 = self.extract_feature(x1)
         embed2 = self.extract_feature(x2)
 
@@ -92,7 +92,7 @@ class GCN(nn.Module):
 
             return out1, out2
         else:
-            return embed1, embed2 
+            return embed1, embed2
 
     def extract_joint_embed(self, feat, x):
         embed = self.extract_feature(x)
@@ -117,7 +117,7 @@ class GCN(nn.Module):
 
         # global pooling
         x = F.avg_pool2d(x, x.size()[2:])
-        #x = x.view(N, M, -1, 1, 1).mean(dim=1)
+        # x = x.view(N, M, -1, 1, 1).mean(dim=1)
 
         x = self.fcn(x)
         x = x.view(x.size(0), -1)
@@ -153,15 +153,14 @@ class st_gcn(nn.Module):
     def __init__(self,
                  in_channels,
                  out_channels,
-                 kernel_size, # (temporal_kernel_size, spatial_kernel_size)
+                 kernel_size,  # (temporal_kernel_size, spatial_kernel_size)
                  stride=1,
-                 dropout=0,
                  residual=True):
         super().__init__()
 
         assert len(kernel_size) == 2
         assert kernel_size[0] % 2 == 1
-        padding = ((kernel_size[0] - 1) // 2, 0)
+        ((kernel_size[0] - 1) // 2, 0)
 
         self.gcn = ConvTemporalGraphical(in_channels, out_channels,
                                          kernel_size[1])
@@ -174,19 +173,19 @@ class st_gcn(nn.Module):
 
         else:
             self.residual = nn.Sequential(
-                nn.Conv2d(
-                    in_channels,
-                    out_channels,
-                    kernel_size=1,
-                    stride=(stride, 1)),
-                nn.BatchNorm2d(out_channels),
+                    nn.Conv2d(
+                            in_channels,
+                            out_channels,
+                            kernel_size=1,
+                            stride=(stride, 1)),
+                    nn.BatchNorm2d(out_channels),
             )
 
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x, A):
 
-        res = self.residual(x)
+        self.residual(x)
         x, A = self.gcn(x, A)
 
         return self.relu(x), A

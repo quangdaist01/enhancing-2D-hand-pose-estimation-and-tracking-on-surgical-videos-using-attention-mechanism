@@ -19,6 +19,7 @@ __license__ = "MIT License"
 class HungarianError(Exception):
     pass
 
+
 # Import numpy. Error if fails
 try:
     import numpy as np
@@ -66,7 +67,7 @@ class Hungarian:
             matrix_size = max(self._maxColumn, self._maxRow)
             pad_columns = matrix_size - self._maxRow
             pad_rows = matrix_size - self._maxColumn
-            my_matrix = np.pad(my_matrix, ((0,pad_columns),(0,pad_rows)), 'constant', constant_values=(0))
+            my_matrix = np.pad(my_matrix, ((0, pad_columns), (0, pad_rows)), 'constant', constant_values=0)
 
             # Convert matrix to profit matrix if necessary
             if is_profit_matrix:
@@ -402,7 +403,7 @@ class CoverZeros:
                 return column_index
 
         raise HungarianError(
-            "Could not find a column without a choice. Failed to cover matrix zeros. Algorithm has failed.")
+                "Could not find a column without a choice. Failed to cover matrix zeros. Algorithm has failed.")
 
     def __find_row_without_choice(self, choice_column_index):
         """Find a row without a choice in it for the column indexed. If a row does not exist then return None."""
@@ -436,12 +437,12 @@ class CoverZeros:
 
 if __name__ == '__main__':
     profit_matrix = [
-        [62, 75, 80, 93, 95, 97],
-        [75, 80, 82, 85, 71, 97],
-        [80, 75, 81, 98, 90, 97],
-        [78, 82, 84, 80, 50, 98],
-        [90, 85, 85, 80, 85, 99],
-        [65, 75, 80, 75, 68, 96]]
+            [62, 75, 80, 93, 95, 97],
+            [75, 80, 82, 85, 71, 97],
+            [80, 75, 81, 98, 90, 97],
+            [78, 82, 84, 80, 50, 98],
+            [90, 85, 85, 80, 85, 99],
+            [65, 75, 80, 75, 68, 96]]
 
     hungarian = Hungarian(profit_matrix, is_profit_matrix=True)
     hungarian.calculate()
@@ -452,9 +453,9 @@ if __name__ == '__main__':
     print("-" * 80)
 
     cost_matrix = [
-        [4, 2, 8],
-        [4, 3, 7],
-        [3, 1, 6]]
+            [4, 2, 8],
+            [4, 3, 7],
+            [3, 1, 6]]
     hungarian = Hungarian(cost_matrix)
     print('calculating...')
     hungarian.calculate()
@@ -465,12 +466,12 @@ if __name__ == '__main__':
     print("-" * 80)
 
     profit_matrix = [
-        [62, 75, 80, 93, 0, 97],
-        [75, 0, 82, 85, 71, 97],
-        [80, 75, 81, 0, 90, 97],
-        [78, 82, 0, 80, 50, 98],
-        [0, 85, 85, 80, 85, 99],
-        [65, 75, 80, 75, 68, 0]]
+            [62, 75, 80, 93, 0, 97],
+            [75, 0, 82, 85, 71, 97],
+            [80, 75, 81, 0, 90, 97],
+            [78, 82, 0, 80, 50, 98],
+            [0, 85, 85, 80, 85, 99],
+            [65, 75, 80, 75, 68, 0]]
     hungarian = Hungarian()
     hungarian.calculate(profit_matrix, is_profit_matrix=True)
     print("Expected value:\t\t523")

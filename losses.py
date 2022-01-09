@@ -3,13 +3,13 @@ from scipy import ndimage
 import os
 import cv2
 
-import torch 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 
 class Losses(object):
-    def __init__(self, *args, **kwargs): #loss_type, size_average=None, reduce=None, reduction='mean', *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # loss_type, size_average=None, reduce=None, reduction='mean', *args, **kwargs):
         """
         Class used to initialize and handle all available loss types in ViP
 
@@ -20,23 +20,23 @@ class Losses(object):
             Loss object 
         """
 
-        self.loss_type   = kwargs['loss_type']
+        self.loss_type = kwargs['loss_type']
         self.loss_object = None
-        
+
         if self.loss_type == 'MSE':
-            self.loss_object = MSE(*args, **kwargs)
+            self.loss_object = MSE(**kwargs)
 
         elif self.loss_type == 'Hand_Heatmap_MSE':
-            self.loss_object = Hand_Heatmap_MSE(*args, **kwargs)
+            self.loss_object = Hand_Heatmap_MSE(**kwargs)
 
         elif self.loss_type == 'M_XENTROPY':
-            self.loss_object = M_XENTROPY(*args, **kwargs)
+            self.loss_object = M_XENTROPY()
 
         elif self.loss_type == 'JointsMSELoss':
-            self.loss_object = JointsMSELoss(*args, **kwargs)
-        
+            self.loss_object = JointsMSELoss(**kwargs)
+
         elif self.loss_type == 'ContrastiveLoss':
-            self.loss_object = ContrastiveLoss(*args, **kwargs)
+            self.loss_object = ContrastiveLoss(**kwargs)
 
         else:
             print('Invalid loss type selected. Quitting!')
@@ -52,11 +52,12 @@ class Losses(object):
 
         Returns:
             Calculated loss value
-        """ 
-        return self.loss_object.loss(predictions, data, **kwargs)
+        """
+        return self.loss_object.loss(predictions, data)
 
-class MSE():
-    def __init__(self, *args, **kwargs):
+
+class MSE:
+    def __init__(self, **kwargs):
         """
         Mean squared error (squared L2 norm) between predictions and target
 
@@ -88,8 +89,9 @@ class MSE():
 
         return self.mse_loss(predictions, targets)
 
-class Hand_Heatmap_MSE():
-    def __init__(self, *args, **kwargs):
+
+class Hand_Heatmap_MSE:
+    def __init__(self, **kwargs):
         """
         Mean squared error (squared L2 norm) between predictions and target
 
@@ -116,10 +118,10 @@ class Hand_Heatmap_MSE():
 
         out1, out2, out3, out4, out5, out6 = predictions
         targets = data['heatmaps'].to(self.device)
-    
-        mask = 1 - data['occ'].to(self.device)[:,0,:,None,None].float()
-        targets = targets[:,0] * mask
-        
+
+        mask = 1 - data['occ'].to(self.device)[:, 0, :, None, None].float()
+        targets = targets[:, 0] * mask
+
         '''
         import matplotlib.pyplot as plt
 
@@ -147,16 +149,17 @@ class Hand_Heatmap_MSE():
         plt.show()
         '''
 
-        #loss includes many intermediate supervision steps
+        # loss includes many intermediate supervision steps
         total_loss = self.mse_loss(out1 * mask, targets) + self.mse_loss(out2 * mask, targets) + \
-               self.mse_loss(out3 * mask, targets) + self.mse_loss(out4 * mask, targets) + \
-               self.mse_loss(out5 * mask, targets) + self.mse_loss(out6 * mask, targets) 
-        
-        heat_weight = 46*46*22
+                     self.mse_loss(out3 * mask, targets) + self.mse_loss(out4 * mask, targets) + \
+                     self.mse_loss(out5 * mask, targets) + self.mse_loss(out6 * mask, targets)
+
+        heat_weight = 46 * 46 * 22
         return total_loss * heat_weight
-    
+
+
 class M_XENTROPY(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         """
         Cross-entropy Loss with a distribution of values, not just 1-hot vectors 
 
@@ -186,55 +189,58 @@ class M_XENTROPY(object):
 
         return torch.mean(torch.sum(-one_hot * self.logsoftmax(predictions), dim=1))
 
-#https://github.com/microsoft/human-pose-estimation.pytorch/blob/master/lib/core/loss.py
+
+# https://github.com/microsoft/human-pose-estimation.pytorch/blob/master/lib/core/loss.py
 class JointsMSELoss(nn.Module):
     def __init__(self, **kwargs):
         super(JointsMSELoss, self).__init__()
 
         self.criterion = nn.MSELoss()
 
-        self.device    = kwargs['device']
+        self.device = kwargs['device']
         self.use_target_weight = kwargs['use_target_weight']
-        
-        self.heatmap_size   = kwargs['heatmap_size']
-        self.loss_weight = np.prod(self.heatmap_size) #scale loss by this value 
+
+        self.heatmap_size = kwargs['heatmap_size']
+        self.loss_weight = np.prod(self.heatmap_size)  # scale loss by this value
 
     def loss(self, predictions, data):
         target = data['heatmaps'].to(self.device)
         target_weight = data['heatmap_weights'].float().to(self.device)
-	
+
         B, O, num_joints, H, W = predictions.shape
-        predictions = predictions.reshape(B*O, num_joints, H, W)
-        target      = target.reshape(B*O, num_joints, H, W)
-        target_weight = target_weight.reshape(B*O, num_joints, -1)
+        predictions = predictions.reshape(B * O, num_joints, H, W)
+        target = target.reshape(B * O, num_joints, H, W)
+        target_weight = target_weight.reshape(B * O, num_joints, -1)
 
         batch_size = predictions.shape[0]
 
         heatmaps_pred = predictions.reshape((batch_size, num_joints, -1)).split(1, 1)
         heatmaps_gt = target.reshape((batch_size, num_joints, -1)).split(1, 1)
-        loss = 0 
+        loss = 0
 
         for idx in range(num_joints):
             heatmap_pred = heatmaps_pred[idx].squeeze()
             heatmap_gt = heatmaps_gt[idx].squeeze()
             if self.use_target_weight:
                 loss += 0.5 * self.criterion(
-                    heatmap_pred.mul(target_weight[:, idx]),
-                    heatmap_gt.mul(target_weight[:, idx])
+                        heatmap_pred.mul(target_weight[:, idx]),
+                        heatmap_gt.mul(target_weight[:, idx])
                 )
             else:
                 loss += 0.5 * self.criterion(heatmap_pred, heatmap_gt)
 
-        return loss / num_joints   
+        return loss / num_joints
 
-#Code source: https://github.com/adambielski/siamese-triplet/blob/master/losses.py
+    # Code source: https://github.com/adambielski/siamese-triplet/blob/master/losses.py
+
+
 class ContrastiveLoss(nn.Module):
     """
     Contrastive loss
     Takes embeddings of two samples and a target label == 1 if samples are from the same class and label == 0 otherwise
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         super(ContrastiveLoss, self).__init__()
 
         self.margin = kwargs['cont_loss_margin']

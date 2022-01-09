@@ -5,8 +5,10 @@ import numpy as np
 import os
 from PIL import Image
 
+
 class VideoDataset(Dataset):
     __metaclass__ = ABCMeta
+
     def __init__(self, *args, **kwargs):
         """
         Args: 
@@ -24,24 +26,24 @@ class VideoDataset(Dataset):
         """
 
         # JSON loading arguments
-        self.json_path      = kwargs['json_path']
-        self.load_type      = kwargs['load_type']
-        
+        self.json_path = kwargs['json_path']
+        self.load_type = kwargs['load_type']
+
         # Clips processing arguments
-        self.clip_length    = kwargs['clip_length']
-        self.clip_offset    = kwargs['clip_offset']
-        self.clip_stride    = kwargs['clip_stride']
-        self.num_clips      = kwargs['num_clips']
-        self.random_offset  = kwargs['random_offset']
+        self.clip_length = kwargs['clip_length']
+        self.clip_offset = kwargs['clip_offset']
+        self.clip_stride = kwargs['clip_stride']
+        self.num_clips = kwargs['num_clips']
+        self.random_offset = kwargs['random_offset']
 
         # Frame-wise processing arguments
-        self.resize_shape   = kwargs['resize_shape']
-        self.crop_shape     = kwargs['crop_shape'] 
-        self.crop_type      = kwargs['crop_type'] 
-        self.final_shape    = kwargs['final_shape']
+        self.resize_shape = kwargs['resize_shape']
+        self.crop_shape = kwargs['crop_shape']
+        self.crop_type = kwargs['crop_type']
+        self.final_shape = kwargs['final_shape']
 
-        #Experiment arguments
-        self.batch_size     = kwargs['batch_size']
+        # Experiment arguments
+        self.batch_size = kwargs['batch_size']
 
         # Creates the self.samples list which will be indexed by each __getitem__ call
         self._getClips()
@@ -56,7 +58,7 @@ class VideoDataset(Dataset):
         """
         Loads the JSON file associated with the videos in a datasets and processes each of them into clips
         """
-        raise NotImplementedError("Dataset must contain getClips method which loads and processes the dataset's JSON file.") 
+        raise NotImplementedError("Dataset must contain getClips method which loads and processes the dataset's JSON file.")
 
     def _extractClips(self, video):
         """
@@ -72,46 +74,45 @@ class VideoDataset(Dataset):
             self.random_offset: Randomly select a clip_length sized clip from a video
         """
         if self.clip_offset > 0:
-            if len(video)-self.clip_offset >= self.clip_length:
+            if len(video) - self.clip_offset >= self.clip_length:
                 video = video[self.clip_offset:]
 
         if self.num_clips < 0:
             if len(video) >= self.clip_length:
                 # Uniformly sample one clip from the video
-                final_video = [video[_idx] for _idx in np.linspace(0, len(video)-1, self.clip_length, dtype='int32')]
+                final_video = [video[_idx] for _idx in np.linspace(0, len(video) - 1, self.clip_length, dtype='int32')]
                 final_video = [final_video]
 
             else:
                 # Loop if insufficient elements
-                indices = np.ceil(self.clip_length/float(len(video))) # Number of times to repeat the video to exceed one clip_length
+                indices = np.ceil(self.clip_length / float(len(video)))  # Number of times to repeat the video to exceed one clip_length
                 indices = indices.astype('int32')
-                indices = np.tile(np.arange(0, len(video), 1, dtype='int32'), indices) # Repeat the video indices until it exceeds a clip_length
-                indices = indices[np.linspace(0, len(indices)-1, self.clip_length, dtype='int32')] # Uniformly sample clip_length frames from the looped video
+                indices = np.tile(np.arange(0, len(video), 1, dtype='int32'), indices)  # Repeat the video indices until it exceeds a clip_length
+                indices = indices[np.linspace(0, len(indices) - 1, self.clip_length, dtype='int32')]  # Uniformly sample clip_length frames from the looped video
 
                 final_video = [video[_idx] for _idx in indices]
                 final_video = [final_video]
 
-
             # END IF
 
         elif self.num_clips == 0:
-            #If dividing all clips evenly by clip_length, ensure clip_length is a positive number
+            # If dividing all clips evenly by clip_length, ensure clip_length is a positive number
             self.clip_length = max(self.clip_length, 1)
 
             # Divide entire video into the max number of clip_length segments
             if len(video) >= self.clip_length:
-                indices     = np.arange(start=0, stop=len(video)-self.clip_length+1, step=self.clip_stride)
+                indices = np.arange(start=0, stop=len(video) - self.clip_length + 1, step=self.clip_stride)
                 final_video = []
 
                 for _idx in indices:
                     if _idx + self.clip_length <= len(video):
-                        final_video.append([video[true_idx] for true_idx in range(_idx, _idx+self.clip_length)])
+                        final_video.append([video[true_idx] for true_idx in range(_idx, _idx + self.clip_length)])
 
                 # END FOR
 
             else:
                 # Loop if insufficient elements
-                indices = np.ceil(self.clip_length/float(len(video)))
+                indices = np.ceil(self.clip_length / float(len(video)))
                 indices = indices.astype('int32')
                 indices = np.tile(np.arange(0, len(video), 1, dtype='int32'), indices)
                 indices = indices[:self.clip_length]
@@ -120,7 +121,7 @@ class VideoDataset(Dataset):
                 final_video = [final_video]
 
             # END IF                               
-    
+
         else:
             # num_clips > 0, select exactly num_clips from a video
 
@@ -129,14 +130,12 @@ class VideoDataset(Dataset):
 
                 # Batch size must equal one or dataloader items may have varying lengths 
                 # and can't be stacked i.e. throws an error
-                
-                #assert(self.batch_size == 1) #NOTE: I disagree with this assertion, but then again it can commented out
+
+                # assert(self.batch_size == 1) #NOTE: I disagree with this assertion, but then again it can commented out
 
                 return [video]
 
-
-            required_length = (self.num_clips-1)*(self.clip_stride)+self.clip_length
-
+            required_length = (self.num_clips - 1) * self.clip_stride + self.clip_length
 
             if self.random_offset:
                 if len(video) >= required_length:
@@ -151,11 +150,11 @@ class VideoDataset(Dataset):
                 indices = indices.astype('int32')[:self.num_clips]
 
                 video = np.array(video)
-                final_video = [video[np.arange(_idx, _idx+self.clip_length).astype('int32')].tolist() for _idx in indices]
+                final_video = [video[np.arange(_idx, _idx + self.clip_length).astype('int32')].tolist() for _idx in indices]
 
             else:
                 # If the video is too small to get num_clips given the clip_length and clip_stride, loop it until you can
-                indices = np.ceil(required_length /float(len(video)))
+                indices = np.ceil(required_length / float(len(video)))
                 indices = indices.astype('int32')
                 indices = np.tile(np.arange(0, len(video), 1, dtype='int32'), indices)
 
@@ -163,8 +162,8 @@ class VideoDataset(Dataset):
                 clip_starts = np.arange(0, len(indices), self.clip_stride).astype('int32')[:self.num_clips]
 
                 video = np.array(video)
-                final_video = [video[indices[_idx:_idx+self.clip_length]].tolist() for _idx in clip_starts]
-            
+                final_video = [video[indices[_idx:_idx + self.clip_length]].tolist() for _idx in clip_starts]
+
             # END IF
 
         # END IF
@@ -172,11 +171,9 @@ class VideoDataset(Dataset):
         return final_video
 
 
-        
-
-
 class RecognitionDataset(VideoDataset):
     __metaclass__ = ABCMeta
+
     def __init__(self, *args, **kwargs):
         super(RecognitionDataset, self).__init__(*args, **kwargs)
         self.load_type = kwargs['load_type']
@@ -203,15 +200,15 @@ class RecognitionDataset(VideoDataset):
         Eg: action_label = dataset[vid_index]['frames'][frame_index]['actions'][action_index]['action_class']
         """
 
-        self.samples   = []
- 
+        self.samples = []
+
         if self.load_type == 'train':
             full_json_path = os.path.join(self.json_path, 'train.json')
 
         elif self.load_type == 'val':
-            full_json_path = os.path.join(self.json_path, 'val.json') 
+            full_json_path = os.path.join(self.json_path, 'val.json')
 
-            #If val.json doesn't exist, it will default to test.json
+            # If val.json doesn't exist, it will default to test.json
             if not os.path.exists(full_json_path):
                 full_json_path = os.path.join(self.json_path, 'test.json')
 
@@ -220,8 +217,8 @@ class RecognitionDataset(VideoDataset):
 
         # END IF 
 
-        json_file = open(full_json_path,'r')
-        json_data = json.load(json_file) 
+        json_file = open(full_json_path, 'r')
+        json_data = json.load(json_file)
         json_file.close()
 
         # Load the information for each video and process it into clips
@@ -230,13 +227,13 @@ class RecognitionDataset(VideoDataset):
 
             # Each clip is a list of dictionaries per frame containing information
             # Example info: object bbox annotations, object classes, frame img path
-            for clip in clips:    
+            for clip in clips:
                 self.samples.append(dict(frames=clip, base_path=video_info['base_path']))
-
 
 
 class DetectionDataset(VideoDataset):
     __metaclass__ = ABCMeta
+
     def __init__(self, *args, **kwargs):
         super(DetectionDataset, self).__init__(*args, **kwargs)
         self.load_type = kwargs['load_type']
@@ -268,23 +265,23 @@ class DetectionDataset(VideoDataset):
 
         # Load all video paths into the samples array to be loaded by __getitem__ 
 
-        self.samples   = []
-        
+        self.samples = []
+
         if self.load_type == 'train':
             full_json_path = os.path.join(self.json_path, 'train.json')
 
         elif self.load_type == 'val':
-            full_json_path = os.path.join(self.json_path, 'val.json') 
+            full_json_path = os.path.join(self.json_path, 'val.json')
 
-            #If val.json doesn't exist, it will default to test.json
+            # If val.json doesn't exist, it will default to test.json
             if not os.path.exists(full_json_path):
                 full_json_path = os.path.join(self.json_path, 'test.json')
 
         else:
             full_json_path = os.path.join(self.json_path, 'test.json')
 
-        json_file = open(full_json_path,'r')
-        json_data = json.load(json_file) 
+        json_file = open(full_json_path, 'r')
+        json_data = json.load(json_file)
         json_file.close()
 
         # Load the information for each video and process it into clips
@@ -293,7 +290,5 @@ class DetectionDataset(VideoDataset):
 
             # Each clip is a list of dictionaries per frame containing information
             # Example info: object bbox annotations, object classes, frame img path
-            for clip in clips:    
+            for clip in clips:
                 self.samples.append(dict(frames=clip, base_path=video_info['base_path'], frame_size=video_info['frame_size']))
-
-

@@ -1,4 +1,4 @@
-#Source: https://github.com/open-mmlab/mmskeleton/blob/master/mmskeleton/ops/st_gcn/gconv.py
+# Source: https://github.com/open-mmlab/mmskeleton/blob/master/mmskeleton/ops/st_gcn/gconv.py
 
 # The based unit of graph convolutional networks.
 
@@ -34,6 +34,7 @@ class ConvTemporalGraphical(nn.Module):
             :math:`T_{in}/T_{out}` is a length of input/output sequence,
             :math:`V` is the number of graph nodes. 
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -64,4 +65,3 @@ class ConvTemporalGraphical(nn.Module):
         x = torch.einsum('nkctv,kvw->nctw', (x, A))
 
         return x.contiguous(), A
-

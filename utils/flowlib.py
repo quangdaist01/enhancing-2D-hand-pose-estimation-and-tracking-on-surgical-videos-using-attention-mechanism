@@ -7,12 +7,11 @@
 # Date: 6th Aug 2016
 # ==============================
 """
-import png #Install as pypng
+import png  # Install as pypng
 import numpy as np
 import matplotlib.colors as cl
 import matplotlib.pyplot as plt
 from PIL import Image
-
 
 UNKNOWN_FLOW_THRESH = 1e7
 SMALLFLOW = 0.0
@@ -95,7 +94,7 @@ def read_flow(filename):
     else:
         w = np.fromfile(f, np.int32, count=1)[0]
         h = np.fromfile(f, np.int32, count=1)[0]
-        #print("Reading %d x %d flo file" % (h, w))
+        # print("Reading %d x %d flo file" % (h, w))
         data2d = np.fromfile(f, np.float32, count=2 * w * h)
         # reshape data into 3D array (columns, rows, channels)
         data2d = np.resize(data2d, (h, w, 2))
@@ -213,14 +212,14 @@ def flow_error(tu, tv, u, v):
     index_su = su[ind2]
     index_sv = sv[ind2]
     an = 1.0 / np.sqrt(index_su ** 2 + index_sv ** 2 + 1)
-    un = index_su * an
-    vn = index_sv * an
+    index_su * an
+    index_sv * an
 
     index_stu = stu[ind2]
     index_stv = stv[ind2]
     tn = 1.0 / np.sqrt(index_stu ** 2 + index_stv ** 2 + 1)
-    tun = index_stu * tn
-    tvn = index_stv * tn
+    index_stu * tn
+    index_stv * tn
 
     '''
     angle = un * tun + vn * tvn + (an * tn)
@@ -264,10 +263,10 @@ def flow_to_image(flow):
     rad = np.sqrt(u ** 2 + v ** 2)
     maxrad = max(-1, np.max(rad))
 
-    print("max flow: %.4f\nflow range:\nu = %.3f .. %.3f\nv = %.3f .. %.3f" % (maxrad, minu,maxu, minv, maxv))
+    print("max flow: %.4f\nflow range:\nu = %.3f .. %.3f\nv = %.3f .. %.3f" % (maxrad, minu, maxu, minv, maxv))
 
-    u = u/(maxrad + np.finfo(float).eps)
-    v = v/(maxrad + np.finfo(float).eps)
+    u = u / (maxrad + np.finfo(float).eps)
+    v = v / (maxrad + np.finfo(float).eps)
 
     img = compute_color(u, v)
 
@@ -285,8 +284,8 @@ def evaluate_flow_file(gt, pred):
     :return: end point error, float32
     """
     # Read flow files and calculate the errors
-    gt_flow = read_flow(gt)        # ground truth flow
-    eva_flow = read_flow(pred)     # predicted flow
+    gt_flow = read_flow(gt)  # ground truth flow
+    eva_flow = read_flow(pred)  # predicted flow
     # Calculate errors
     average_pe = flow_error(gt_flow[:, :, 0], gt_flow[:, :, 1], eva_flow[:, :, 0], eva_flow[:, :, 1])
     return average_pe
@@ -380,15 +379,15 @@ def warp_image(im, flow):
     n = image_height * image_width
     (iy, ix) = np.mgrid[0:image_height, 0:image_width]
     (fy, fx) = np.mgrid[0:flow_height, 0:flow_width]
-    fx += flow[:,:,0]
-    fy += flow[:,:,1]
-    mask = np.logical_or(fx <0 , fx > flow_width)
+    fx += flow[:, :, 0]
+    fy += flow[:, :, 1]
+    mask = np.logical_or(fx < 0, fx > flow_width)
     mask = np.logical_or(mask, fy < 0)
     mask = np.logical_or(mask, fy > flow_height)
     fx = np.minimum(np.maximum(fx, 0), flow_width)
     fy = np.minimum(np.maximum(fy, 0), flow_height)
-    points = np.concatenate((ix.reshape(n,1), iy.reshape(n,1)), axis=1)
-    xi = np.concatenate((fx.reshape(n, 1), fy.reshape(n,1)), axis=1)
+    points = np.concatenate((ix.reshape(n, 1), iy.reshape(n, 1)), axis=1)
+    xi = np.concatenate((fx.reshape(n, 1), fy.reshape(n, 1)), axis=1)
     warp = np.zeros((image_height, image_width, im.shape[2]))
     for i in range(im.shape[2]):
         channel = im[:, :, i]
@@ -407,6 +406,7 @@ def warp_image(im, flow):
 Others
 ==============
 """
+
 
 def scale_image(image, new_range):
     """
@@ -439,30 +439,30 @@ def compute_color(u, v):
     colorwheel = make_color_wheel()
     ncols = np.size(colorwheel, 0)
 
-    rad = np.sqrt(u**2+v**2)
+    rad = np.sqrt(u ** 2 + v ** 2)
 
     a = np.arctan2(-v, -u) / np.pi
 
-    fk = (a+1) / 2 * (ncols - 1) + 1
+    fk = (a + 1) / 2 * (ncols - 1) + 1
 
     k0 = np.floor(fk).astype(int)
 
     k1 = k0 + 1
-    k1[k1 == ncols+1] = 1
+    k1[k1 == ncols + 1] = 1
     f = fk - k0
 
-    for i in range(0, np.size(colorwheel,1)):
+    for i in range(0, np.size(colorwheel, 1)):
         tmp = colorwheel[:, i]
-        col0 = tmp[k0-1] / 255
-        col1 = tmp[k1-1] / 255
-        col = (1-f) * col0 + f * col1
+        col0 = tmp[k0 - 1] / 255
+        col1 = tmp[k1 - 1] / 255
+        col = (1 - f) * col0 + f * col1
 
         idx = rad <= 1
-        col[idx] = 1-rad[idx]*(1-col[idx])
+        col[idx] = 1 - rad[idx] * (1 - col[idx])
         notidx = np.logical_not(idx)
 
         col[notidx] *= 0.75
-        img[:, :, i] = np.uint8(np.floor(255 * col*(1-nanIdx)))
+        img[:, :, i] = np.uint8(np.floor(255 * col * (1 - nanIdx)))
 
     return img
 
@@ -487,31 +487,31 @@ def make_color_wheel():
 
     # RY
     colorwheel[0:RY, 0] = 255
-    colorwheel[0:RY, 1] = np.transpose(np.floor(255*np.arange(0, RY) / RY))
+    colorwheel[0:RY, 1] = np.transpose(np.floor(255 * np.arange(0, RY) / RY))
     col += RY
 
     # YG
-    colorwheel[col:col+YG, 0] = 255 - np.transpose(np.floor(255*np.arange(0, YG) / YG))
-    colorwheel[col:col+YG, 1] = 255
+    colorwheel[col:col + YG, 0] = 255 - np.transpose(np.floor(255 * np.arange(0, YG) / YG))
+    colorwheel[col:col + YG, 1] = 255
     col += YG
 
     # GC
-    colorwheel[col:col+GC, 1] = 255
-    colorwheel[col:col+GC, 2] = np.transpose(np.floor(255*np.arange(0, GC) / GC))
+    colorwheel[col:col + GC, 1] = 255
+    colorwheel[col:col + GC, 2] = np.transpose(np.floor(255 * np.arange(0, GC) / GC))
     col += GC
 
     # CB
-    colorwheel[col:col+CB, 1] = 255 - np.transpose(np.floor(255*np.arange(0, CB) / CB))
-    colorwheel[col:col+CB, 2] = 255
+    colorwheel[col:col + CB, 1] = 255 - np.transpose(np.floor(255 * np.arange(0, CB) / CB))
+    colorwheel[col:col + CB, 2] = 255
     col += CB
 
     # BM
-    colorwheel[col:col+BM, 2] = 255
-    colorwheel[col:col+BM, 0] = np.transpose(np.floor(255*np.arange(0, BM) / BM))
+    colorwheel[col:col + BM, 2] = 255
+    colorwheel[col:col + BM, 0] = np.transpose(np.floor(255 * np.arange(0, BM) / BM))
     col += + BM
 
     # MR
-    colorwheel[col:col+MR, 2] = 255 - np.transpose(np.floor(255 * np.arange(0, MR) / MR))
-    colorwheel[col:col+MR, 0] = 255
+    colorwheel[col:col + MR, 2] = 255 - np.transpose(np.floor(255 * np.arange(0, MR) / MR))
+    colorwheel[col:col + MR, 0] = 255
 
     return colorwheel

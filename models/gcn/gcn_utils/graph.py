@@ -1,9 +1,9 @@
-#Adapted from: https://github.com/open-mmlab/mmskeleton/blob/master/mmskeleton/ops/st_gcn/graph.py
+# Adapted from: https://github.com/open-mmlab/mmskeleton/blob/master/mmskeleton/ops/st_gcn/graph.py
 
 import numpy as np
 
 
-class Graph():
+class Graph:
     """ The Graph to model the skeletons extracted by the openpose
 
     Args:
@@ -24,6 +24,7 @@ class Graph():
         dilation (int): controls the spacing between the kernel points
 
     """
+
     def __init__(self,
                  layout='posetrack',
                  strategy='spatial',
@@ -45,27 +46,27 @@ class Graph():
         if layout == 'posetrack':
             self.num_node = 17
             self_link = [(i, i) for i in range(self.num_node)]
-            neighbor_link = [(10,8), (8,6), (9,7), (7,5),
-                             (15,13), (13,11), (16,14), (14,12), (12,11), (11,5),
-                             (12,6), (6,1), (5,1), (1,0), (0,2),
-                             (0,4), (0,3)]
+            neighbor_link = [(10, 8), (8, 6), (9, 7), (7, 5),
+                             (15, 13), (13, 11), (16, 14), (14, 12), (12, 11), (11, 5),
+                             (12, 6), (6, 1), (5, 1), (1, 0), (0, 2),
+                             (0, 4), (0, 3)]
             self.edge = self_link + neighbor_link
             self.center = 1
-        elif layout == 'posetrack_stgcn': #posetrack as seen in st-gcn
+        elif layout == 'posetrack_stgcn':  # posetrack as seen in st-gcn
             self.num_node = 15
             self_link = [(i, i) for i in range(self.num_node)]
-            neighbor_link = [(0, 1), (1, 2), (3, 4), (4, 5), (2, 8), 
+            neighbor_link = [(0, 1), (1, 2), (3, 4), (4, 5), (2, 8),
                              (8, 7), (7, 6), (8, 12), (12, 9), (9, 10),
                              (10, 11), (9, 3), (12, 13), (13, 14)]
             self.edge = self_link + neighbor_link
             self.center = 12
-        elif layout == 'mscoco': 
-            self.num_node = 18 #originally only 17 points, but augmented with neck joint
-            self_link = [(i,i) for i in range(self.num_node)]
-            neighbor_link = [(10,8), (8,6), (9,7), (7,5),
-                             (15,13), (13,11), (16,14), (14,12), (11,17),
-                             (12,17), (17,0), (0,1), (1,3),
-                             (0,2), (2,4)]
+        elif layout == 'mscoco':
+            self.num_node = 18  # originally only 17 points, but augmented with neck joint
+            self_link = [(i, i) for i in range(self.num_node)]
+            neighbor_link = [(10, 8), (8, 6), (9, 7), (7, 5),
+                             (15, 13), (13, 11), (16, 14), (14, 12), (11, 17),
+                             (12, 17), (17, 0), (0, 1), (1, 3),
+                             (0, 2), (2, 4)]
             self.edge = self_link + neighbor_link
             self.center = 17
         elif layout == 'openpose':
@@ -102,13 +103,13 @@ class Graph():
         elif layout == 'hand':
             self.num_node = 21
             self_link = [(i, i) for i in range(self.num_node)]
-            neighbor_link = [(0,1), (1,2), (2,3), (3,4),
-                              (0,5), (5,6), (6,7), (7,8),
-                              (0,9), (9,10), (10,11), (11,12),
-                              (0,13), (13,14),(14,15), (15,16),
-                              (0,17), (17,18), (18,19), (19,20)]
+            neighbor_link = [(0, 1), (1, 2), (2, 3), (3, 4),
+                             (0, 5), (5, 6), (6, 7), (7, 8),
+                             (0, 9), (9, 10), (10, 11), (11, 12),
+                             (0, 13), (13, 14), (14, 15), (15, 16),
+                             (0, 17), (17, 18), (18, 19), (19, 20)]
             self.edge = self_link + neighbor_link
-            self.center = 0 
+            self.center = 0
         else:
             raise ValueError("Do Not Exist This Layout.")
 
@@ -116,18 +117,18 @@ class Graph():
         valid_hop = range(0, self.max_hop + 1, self.dilation)
         adjacency = np.zeros((self.num_node, self.num_node))
         for hop in valid_hop:
-            adjacency[self.hop_dis == hop] = 1 
+            adjacency[self.hop_dis == hop] = 1
         normalize_adjacency = normalize_digraph(adjacency)
 
         if strategy == 'uniform':
             A = np.zeros((1, self.num_node, self.num_node))
             A[0] = normalize_adjacency
-            self.A = A 
+            self.A = A
         elif strategy == 'distance':
             A = np.zeros((len(valid_hop), self.num_node, self.num_node))
             for i, hop in enumerate(valid_hop):
-                A[i][self.hop_dis == hop] = normalize_adjacency[self.hop_dis ==hop]
-            self.A = A 
+                A[i][self.hop_dis == hop] = normalize_adjacency[self.hop_dis == hop]
+            self.A = A
         elif strategy == 'spatial':
             A = []
             for hop in valid_hop:
@@ -149,9 +150,10 @@ class Graph():
                     A.append(a_root + a_close)
                     A.append(a_further)
             A = np.stack(A)
-            self.A = A 
+            self.A = A
         else:
             raise ValueError("This Strategy Does not exist.")
+
 
 def get_hop_distance(num_node, edge, max_hop=1):
     A = np.zeros((num_node, num_node))
@@ -174,7 +176,7 @@ def normalize_digraph(A):
     Dn = np.zeros((num_node, num_node))
     for i in range(num_node):
         if Dl[i] > 0:
-            Dn[i, i] = Dl[i]**(-1)
+            Dn[i, i] = Dl[i] ** (-1)
     AD = np.dot(A, Dn)
     return AD
 
@@ -185,6 +187,6 @@ def normalize_undigraph(A):
     Dn = np.zeros((num_node, num_node))
     for i in range(num_node):
         if Dl[i] > 0:
-            Dn[i, i] = Dl[i]**(-0.5)
+            Dn[i, i] = Dl[i] ** (-0.5)
     DAD = np.dot(np.dot(Dn, A), Dn)
     return DAD

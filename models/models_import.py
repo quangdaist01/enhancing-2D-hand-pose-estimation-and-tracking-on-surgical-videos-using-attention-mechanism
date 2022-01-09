@@ -2,7 +2,8 @@ import importlib
 import sys
 import glob
 
-def create_model_object(*args, **kwargs):
+
+def create_model_object(**kwargs):
     """
     Use model_name to find a matching model class
 
@@ -21,7 +22,7 @@ def create_model_object(*args, **kwargs):
         if mf in ignore_files:
             continue
 
-        module_name = mf[:-3].replace('/','.')
+        module_name = mf[:-3].replace('/', '.')
         module = importlib.import_module(module_name)
         module_lower = list(map(lambda module_x: module_x.lower(), dir(module)))
 

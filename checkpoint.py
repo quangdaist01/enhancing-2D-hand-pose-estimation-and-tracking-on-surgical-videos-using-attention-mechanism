@@ -1,6 +1,7 @@
 import os
 import torch
 
+
 def save_checkpoint(epoch, step, model, optimizer, save_path):
     """
     Save checkpoint pickle file with model weights and other experimental settings 
@@ -15,14 +16,15 @@ def save_checkpoint(epoch, step, model, optimizer, save_path):
         None
     """
 
-    state = {   'epoch':epoch,
-                'step': step,
-                'state_dict': model.state_dict(),
-                'optimizer' : optimizer.state_dict(),
+    state = {'epoch': epoch,
+             'step': step,
+             'state_dict': model.state_dict(),
+             'optimizer': optimizer.state_dict(),
              }
 
     torch.save(state, save_path)
- 
+
+
 def load_checkpoint(name, key_name='state_dict'):
     """
     Load checkpoint pickle file and return selected element from pickle file

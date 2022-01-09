@@ -150,6 +150,7 @@ resnet_spec = {18: (BasicBlock, [2, 2, 2, 2]),
                101: (Bottleneck, [3, 4, 23, 3]),
                152: (Bottleneck, [3, 8, 36, 3])}
 
+
 class FlowTrack(nn.Module):
 
     def __init__(self, **kwargs):
@@ -158,10 +159,10 @@ class FlowTrack(nn.Module):
 
         if kwargs['dataset'] in hands_preprocessing:
             self.train_transforms = PreprocessTrainHand(**kwargs)
-            self.test_transforms  = PreprocessEvalHand(**kwargs)
+            self.test_transforms = PreprocessEvalHand(**kwargs)
         else:
-            self.train_transforms = PreprocessTrainFlowTrack(**kwargs) 
-            self.test_transforms  = PreprocessEvalFlowTrack(**kwargs)
+            self.train_transforms = PreprocessTrainFlowTrack(**kwargs)
+            self.test_transforms = PreprocessEvalFlowTrack(**kwargs)
 
         num_layers = kwargs['num_layers']
         block, layers = resnet_spec[num_layers]
@@ -182,25 +183,25 @@ class FlowTrack(nn.Module):
 
         # used for deconv layers
         self.deconv_layers = self._make_deconv_layer(
-            kwargs['num_deconv_layers'],
-            kwargs['num_deconv_filters'],
-            kwargs['num_deconv_kernels'],)
+                kwargs['num_deconv_layers'],
+                kwargs['num_deconv_filters'],
+                kwargs['num_deconv_kernels'], )
 
         self.final_layer = nn.Conv2d(
-            in_channels=kwargs['num_deconv_filters'][-1],
-            out_channels=kwargs['num_joints'],
-            kernel_size=kwargs['final_conv_kernel'],
-            stride=1,
-            padding=1 if kwargs['final_conv_kernel'] == 3 else 0
+                in_channels=kwargs['num_deconv_filters'][-1],
+                out_channels=kwargs['num_joints'],
+                kernel_size=kwargs['final_conv_kernel'],
+                stride=1,
+                padding=1 if kwargs['final_conv_kernel'] == 3 else 0
         )
 
-        #for saving and/or outputting visual features
+        # for saving and/or outputting visual features
         self.save_feat = kwargs['save_feat']
-        self.out_feat  = kwargs['out_feat'] 
-        #self.pooling = nn.AdaptiveAvgPool2d((1,1))
+        self.out_feat = kwargs['out_feat']
+        # self.pooling = nn.AdaptiveAvgPool2d((1,1))
 
-        #Also try with max pooling instead 
-        self.pooling = nn.AdaptiveMaxPool2d((1,1))
+        # Also try with max pooling instead
+        self.pooling = nn.AdaptiveMaxPool2d((1, 1))
 
         if isinstance(kwargs['pretrained'], int) and kwargs['pretrained']:
             self.init_weights()
@@ -208,8 +209,8 @@ class FlowTrack(nn.Module):
         image_height, image_width = kwargs['final_shape']
         self.heatmap_size = kwargs['heatmap_size']
 
-        self.network_stride  = (image_width/self.heatmap_size[0],
-                        image_height/self.heatmap_size[1])#effective stride of the entire network
+        self.network_stride = (image_width / self.heatmap_size[0],
+                               image_height / self.heatmap_size[1])  # effective stride of the entire network
 
         self.num_joints = kwargs['num_joints']
 
@@ -217,20 +218,20 @@ class FlowTrack(nn.Module):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                nn.Conv2d(self.inplanes, planes * block.expansion,
-                          kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(planes * block.expansion, momentum=BN_MOMENTUM),
+                    nn.Conv2d(self.inplanes, planes * block.expansion,
+                              kernel_size=1, stride=stride, bias=False),
+                    nn.BatchNorm2d(planes * block.expansion, momentum=BN_MOMENTUM),
             )
 
         layers = []
         layers.append(block(self.inplanes, planes, stride, downsample))
         self.inplanes = planes * block.expansion
-        for i in range(1, blocks):
+        for _ in range(1, blocks):
             layers.append(block(self.inplanes, planes))
 
         return nn.Sequential(*layers)
 
-    def _get_deconv_cfg(self, deconv_kernel, index):
+    def _get_deconv_cfg(self, deconv_kernel):
         if deconv_kernel == 4:
             padding = 1
             output_padding = 0
@@ -252,18 +253,18 @@ class FlowTrack(nn.Module):
         layers = []
         for i in range(num_layers):
             kernel, padding, output_padding = \
-                self._get_deconv_cfg(num_kernels[i], i)
+                self._get_deconv_cfg(num_kernels[i])
 
             planes = num_filters[i]
             layers.append(
-                nn.ConvTranspose2d(
-                    in_channels=self.inplanes,
-                    out_channels=planes,
-                    kernel_size=kernel,
-                    stride=2,
-                    padding=padding,
-                    output_padding=output_padding,
-                    bias=self.deconv_with_bias))
+                    nn.ConvTranspose2d(
+                            in_channels=self.inplanes,
+                            out_channels=planes,
+                            kernel_size=kernel,
+                            stride=2,
+                            padding=padding,
+                            output_padding=output_padding,
+                            bias=self.deconv_with_bias))
             layers.append(nn.BatchNorm2d(planes, momentum=BN_MOMENTUM))
             layers.append(nn.ReLU(inplace=True))
             self.inplanes = planes
@@ -273,33 +274,33 @@ class FlowTrack(nn.Module):
     def forward(self, x):
         outputs = []
         feats = []
-        #flip_pairs = [[1, 2], [3, 4], [5, 6], [7, 8],
+        # flip_pairs = [[1, 2], [3, 4], [5, 6], [7, 8],
         #        [9, 10], [11, 12], [13, 14], [15, 16]]
-        flip_pairs = [[3,4],[5,6],[7,8],[9,10],[11,12],[13,14],[15,16]]
-        
-        #expected shape: [batch,3,T,H,W]
-        B = x.shape[0]
+        flip_pairs = [[3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16]]
+
+        # expected shape: [batch,3,T,H,W]
+        x.shape[0]
         T = x.shape[2]
 
-        test = False 
+        test = False
         for t in range(T):
-            output = self.forward_one(x[:,:,t])
+            output = self.forward_one(x[:, :, t])
 
             if test:
-                input_flipped = np.flip(x[:,:,t].cpu().numpy(), 3).copy()
+                input_flipped = np.flip(x[:, :, t].cpu().numpy(), 3).copy()
                 input_flipped = torch.from_numpy(input_flipped).cuda()
                 output_flipped = self.forward_one(input_flipped)
                 output_flipped = flip_back(output_flipped.cpu().numpy(),
                                            flip_pairs)
                 output_flipped = torch.from_numpy(output_flipped.copy()).cuda()
 
-                #NOTE: Figure out what this means
+                # NOTE: Figure out what this means
                 # feature is not aligned, shift flipped heatmap for higher accuracy
                 output_flipped[:, :, :, 1:] = output_flipped.clone()[:, :, :, 0:-1]
 
                 out = (output + output_flipped) * 0.5
             else:
-                out = output 
+                out = output
 
             if self.save_feat or self.out_feat:
                 outputs.append(out[0])
@@ -308,12 +309,12 @@ class FlowTrack(nn.Module):
                 outputs.append(out)
 
         if self.save_feat or self.out_feat:
-            return {'outputs':torch.stack(outputs, dim=1), 'feat':torch.stack(feats, dim=1)}
-        else: 
+            return {'outputs': torch.stack(outputs, dim=1), 'feat': torch.stack(feats, dim=1)}
+        else:
             return torch.stack(outputs, dim=1)
 
     def forward_one(self, x):
-        #x1_0 = x.cpu()
+        # x1_0 = x.cpu()
 
         x = self.conv1(x)
         x = self.bn1(x)
@@ -321,19 +322,19 @@ class FlowTrack(nn.Module):
         x = self.maxpool(x)
 
         vis = self.pooling(x)
-        vis = torch.flatten(vis,1)
+        vis = torch.flatten(vis, 1)
 
         x = self.layer1(x)
-        #x2_0 = torch.sum(x,dim=1).cpu().numpy()
+        # x2_0 = torch.sum(x,dim=1).cpu().numpy()
         x = self.layer2(x)
-        #x3_0 = torch.sum(x,dim=1).cpu().numpy()
+        # x3_0 = torch.sum(x,dim=1).cpu().numpy()
         x = self.layer3(x)
-        #x4_0 = torch.sum(x,dim=1).cpu().numpy()
+        # x4_0 = torch.sum(x,dim=1).cpu().numpy()
         x = self.layer4(x)
-        #x5_0 = torch.sum(x,dim=1).cpu().numpy()
+        # x5_0 = torch.sum(x,dim=1).cpu().numpy()
 
         x = self.deconv_layers(x)
-        #x6_0 = torch.sum(x,dim=1).cpu().numpy()
+        # x6_0 = torch.sum(x,dim=1).cpu().numpy()
         x = self.final_layer(x)
 
         '''
@@ -408,10 +409,11 @@ class FlowTrack(nn.Module):
             logger.error('=> please download it first')
             raise ValueError('imagenet pretrained model does not exist')
 
+
 def flip_back(output_flipped, matched_parts):
-    ''' 
+    """
     ouput_flipped: numpy.ndarray(batch_size, num_joints, height, width)
-    '''
+    """
     assert output_flipped.ndim == 4
     'output_flipped should be [batch_size, num_joints, height, width]'
 
@@ -420,37 +422,40 @@ def flip_back(output_flipped, matched_parts):
     for pair in matched_parts:
         tmp = output_flipped[:, pair[0], :, :].copy()
         output_flipped[:, pair[0], :, :] = output_flipped[:, pair[1], :, :]
-        output_flipped[:, pair[1], :, :] = tmp 
+        output_flipped[:, pair[1], :, :] = tmp
 
     return output_flipped
 
-#Source: python-openpose repo; Hzzone
+
+# Source: python-openpose repo; Hzzone
 def padRightDownCorner(img, stride, padValue):
     h = img.shape[0]
     w = img.shape[1]
 
     pad = 4 * [None]
-    pad[0] = 0 # up
-    pad[1] = 0 # left
-    pad[2] = 0 if (h % stride == 0) else stride - (h % stride) # down
-    pad[3] = 0 if (w % stride == 0) else stride - (w % stride) # right
+    pad[0] = 0  # up
+    pad[1] = 0  # left
+    pad[2] = 0 if (h % stride == 0) else stride - (h % stride)  # down
+    pad[3] = 0 if (w % stride == 0) else stride - (w % stride)  # right
 
-    img_padded = img 
-    pad_up = np.tile(img_padded[0:1, :, :]*0 + padValue, (pad[0], 1, 1)) 
+    img_padded = img
+    pad_up = np.tile(img_padded[0:1, :, :] * 0 + padValue, (pad[0], 1, 1))
     img_padded = np.concatenate((pad_up, img_padded), axis=0)
-    pad_left = np.tile(img_padded[:, 0:1, :]*0 + padValue, (1, pad[1], 1)) 
+    pad_left = np.tile(img_padded[:, 0:1, :] * 0 + padValue, (1, pad[1], 1))
     img_padded = np.concatenate((pad_left, img_padded), axis=1)
-    pad_down = np.tile(img_padded[-2:-1, :, :]*0 + padValue, (pad[2], 1, 1)) 
+    pad_down = np.tile(img_padded[-2:-1, :, :] * 0 + padValue, (pad[2], 1, 1))
     img_padded = np.concatenate((img_padded, pad_down), axis=0)
-    pad_right = np.tile(img_padded[:, -2:-1, :]*0 + padValue, (1, pad[3], 1)) 
+    pad_right = np.tile(img_padded[:, -2:-1, :] * 0 + padValue, (1, pad[3], 1))
     img_padded = np.concatenate((img_padded, pad_right), axis=1)
 
     return img_padded, pad
+
 
 class PreprocessTrainFlowTrack(object):
     """
     Container for all transforms used to preprocess clips for training in this dataset.
     """
+
     def __init__(self, **kwargs):
         """
         Initialize preprocessing class for training set
@@ -462,24 +467,24 @@ class PreprocessTrainFlowTrack(object):
             None
         """
 
-        self.transforms  = []
-        self.preprocess  = kwargs['preprocess']
-        crop_type        = kwargs['crop_type']
+        self.transforms = []
+        self.preprocess = kwargs['preprocess']
+        kwargs['crop_type']
 
         self.transforms.append(pt.SubtractRGBMean(**kwargs))
         self.transforms.append(pt.AffineTransformClip(**kwargs))
         self.transforms.append(pt.RandomFlipClip(direction='h', p=0.5, **kwargs))
 
         self.transforms.append(pt.ToTensorClip(**kwargs))
-        
+
     def __call__(self, input_data, params):
-        center     = params['center']
-        scale      = params['scale']
-        key_pts    = params['key_pts']
+        center = params['center']
+        scale = params['scale']
+        key_pts = params['key_pts']
 
         out_params = {}
-        out_params['trans'] = None 
-        out_params['inv_trans'] = None 
+        out_params['trans'] = None
+        out_params['inv_trans'] = None
         out_params['flip'] = False
 
         for transform in self.transforms:
@@ -488,21 +493,22 @@ class PreprocessTrainFlowTrack(object):
                 out_params['trans'] = transform.trans
                 out_params['inv_trans'] = transform.inv_trans
 
-            if key_pts == []:
+            if not key_pts:
                 input_data = transform(input_data)
             else:
                 input_data, key_pts = transform(input_data, key_pts)
 
             if isinstance(transform, pt.RandomFlipClip):
-                out_params['flip'] = transform.flip  
+                out_params['flip'] = transform.flip
 
-        return input_data, key_pts, out_params  
+        return input_data, key_pts, out_params
 
 
 class PreprocessEvalFlowTrack(object):
     """
     Container for all transforms used to preprocess clips for training in this dataset.
     """
+
     def __init__(self, **kwargs):
         """
         Initialize preprocessing class for training set
@@ -517,18 +523,18 @@ class PreprocessEvalFlowTrack(object):
         self.transforms = []
 
         self.transforms.append(pt.SubtractRGBMean(**kwargs))
-        self.transforms.append(pt.AffineTransformClip(test=True,**kwargs))
+        self.transforms.append(pt.AffineTransformClip(test=True, **kwargs))
 
         self.transforms.append(pt.ToTensorClip(**kwargs))
 
     def __call__(self, input_data, params):
-        center  = params['center']
-        scale   = params['scale']
+        center = params['center']
+        scale = params['scale']
         key_pts = params['key_pts']
 
         out_params = {}
-        out_params['trans'] = None 
-        out_params['inv_trans'] = None 
+        out_params['trans'] = None
+        out_params['inv_trans'] = None
         out_params['flip'] = False
 
         for transform in self.transforms:
@@ -537,31 +543,33 @@ class PreprocessEvalFlowTrack(object):
                 out_params['trans'] = transform.trans
                 out_params['inv_trans'] = transform.inv_trans
 
-            if key_pts == []:
+            if not key_pts:
                 input_data = transform(input_data)
             else:
                 input_data, key_pts = transform(input_data, key_pts)
 
         return input_data, key_pts, out_params
 
+
 class PreprocessTrainHand(object):
     """
     Container for all transforms used to preprocess clips for training in this dataset.
     """
+
     def __init__(self, **kwargs):
         crop_type = kwargs['crop_type']
         self.transforms = []
 
         if kwargs['hand_jitter']:
-            #Perform this transform first because PIL operations destroy floating point accuracy
-            class_kwargs = {'brightness':0.4,'contrast':0.4,'saturation':0.4,'hue':0.4}
+            # Perform this transform first because PIL operations destroy floating point accuracy
+            class_kwargs = {'brightness': 0.4, 'contrast': 0.4, 'saturation': 0.4, 'hue': 0.4}
             self.transforms.append(pt.ApplyToPIL(transform=torchvision.transforms.ColorJitter, class_kwargs=class_kwargs))
 
         self.transforms.append(pt.SubtractRGBMean(**kwargs))
 
         if crop_type == 'Random':
             self.transforms.append(pt.RandomCropClip(**kwargs))
-        elif crop_type=='RandomFrame':
+        elif crop_type == 'RandomFrame':
             self.transforms.append(pt.ApplyToClip(transform=torchvision.transforms.RandomCrop(**kwargs)))
         elif crop_type == 'Center':
             self.transforms.append(pt.CenterCropClip(**kwargs))
@@ -576,7 +584,7 @@ class PreprocessTrainHand(object):
         if kwargs['hand_rotate']:
             min_deg = kwargs['hand_rotate_amount'][0]
             max_deg = kwargs['hand_rotate_amount'][1]
-            self.transforms.append(pt.RandomRotateClip(angles=np.arange(min_deg,max_deg), **kwargs))
+            self.transforms.append(pt.RandomRotateClip(angles=np.arange(min_deg, max_deg), **kwargs))
 
         if kwargs['hand_translate']:
             max_tx = kwargs['hand_translate_amount'][0]
@@ -604,8 +612,8 @@ class PreprocessTrainHand(object):
 
         bbox_data = params['bbox_data']
         hand_crop = params['hand_crop']
-        label     = params['label']
-        angle     = params.get('in_rot', None)
+        params['label']
+        angle = params.get('in_rot', None)
 
         out_params = {}
         out_params['flip'] = False
@@ -620,17 +628,19 @@ class PreprocessTrainHand(object):
             input_data, bbox_data = transform(input_data, bbox_data)
 
             if isinstance(transform, pt.RandomFlipClip):
-                out_params['flip'] = transform.flip  
+                out_params['flip'] = transform.flip
 
             if isinstance(transform, pt.RandomRotateClip):
                 out_params['out_rot'] = transform.out_rot
-        
+
         return input_data, bbox_data, out_params
+
 
 class PreprocessEvalHand(object):
     """
     Container for all transforms used to preprocess clips for evaluation in this dataset.
     """
+
     def __init__(self, **kwargs):
         crop_type = kwargs['crop_type']
         self.transforms = []
@@ -639,17 +649,16 @@ class PreprocessEvalHand(object):
 
         if crop_type == 'Random':
             self.transforms.append(pt.RandomCropClip(**kwargs))
-        elif crop_type=='RandomFrame':
+        elif crop_type == 'RandomFrame':
             self.transforms.append(pt.ApplyToClip(transform=torchvision.transforms.RandomCrop(**kwargs)))
         elif crop_type == 'Center':
             self.transforms.append(pt.CenterCropClip(**kwargs))
         elif crop_type == 'CropClip':
             self.transforms.append(pt.CropClip(**kwargs))
 
-        #self.transforms.append(pt.RandomFlipClip(direction='h', p=1.0, **kwargs))
+        # self.transforms.append(pt.RandomFlipClip(direction='h', p=1.0, **kwargs))
         self.transforms.append(pt.ResizeClip(**kwargs))
         self.transforms.append(pt.ToTensorClip())
-
 
     def __call__(self, input_data, params):
         """
@@ -667,7 +676,7 @@ class PreprocessEvalHand(object):
 
         bbox_data = params['bbox_data']
         hand_crop = params['hand_crop']
-        label     = params['label']
+        params['label']
 
         out_params = {}
         out_params['flip'] = False
@@ -677,6 +686,4 @@ class PreprocessEvalHand(object):
                 transform._update_bbox(hand_crop[0], hand_crop[2], hand_crop[1], hand_crop[3], True)
             input_data, bbox_data = transform(input_data, bbox_data)
 
-
-        return input_data, bbox_data, out_params 
-
+        return input_data, bbox_data, out_params
