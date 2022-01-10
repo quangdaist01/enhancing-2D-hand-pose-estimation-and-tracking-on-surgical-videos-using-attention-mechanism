@@ -2,8 +2,7 @@ import importlib
 import sys
 import glob
 
-
-def create_model_object(**kwargs):
+def create_model_object(*args, **kwargs):
     """
     Use model_name to find a matching model class
 
@@ -13,16 +12,17 @@ def create_model_object(**kwargs):
     Returns:
         model: initialized model object 
     """
+    sys.path.append('/content/Surgical_Hands_RELEASE')
     model_name = kwargs['model']
 
-    model_files = glob.glob('models/*/*.py')
+    model_files = glob.glob('/content/Surgical_Hands_RELEASE/models/*/*.py')
     ignore_files = ['__init__.py', 'models_import.py']
 
     for mf in model_files:
         if mf in ignore_files:
             continue
 
-        module_name = mf[:-3].replace('/', '.')
+        module_name = mf[:-3].replace('/content/Surgical_Hands_RELEASE/', '').replace('/','.')
         module = importlib.import_module(module_name)
         module_lower = list(map(lambda module_x: module_x.lower(), dir(module)))
 

@@ -160,7 +160,7 @@ def train(**args):
             optimizer = optim.SGD(params, lr=args['lr'], momentum=args['momentum'], weight_decay=args['weight_decay'], nesterov=True)
 
         elif args['opt'] == 'adam':
-            optimizer = optim.Adam(params, lr=args['lr'], weight_decay=args['weight_decay'])
+            optimizer = optim.AdamW(params, lr=args['lr'], weight_decay=args['weight_decay'])
 
         else:
             sys.exit('Unsupported optimizer selected. Exiting')

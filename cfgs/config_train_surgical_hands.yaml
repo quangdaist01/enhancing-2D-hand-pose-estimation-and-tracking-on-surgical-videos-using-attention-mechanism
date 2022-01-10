@@ -30,7 +30,7 @@ lr:                0.00008               # Learning rate
 milestones:        20                    # Epoch values to change learning rate     
 model:             FlowTrack_r_gt_v5_linear #Name of model to be loaded  
 momentum:          0.9                   # Momentum value in optimizer
-num_workers:       4                     # Number of CPU worker used to load data
+num_workers:       2                     # Number of CPU worker used to load data
 opt:               adam                  # Name of optimizer
 preprocess:        default               # String argument to select preprocessing type
 pretrained:        './weights/Mixed_Hands/Mixed_Hands_best_model.pkl' # Load pretrained network 
