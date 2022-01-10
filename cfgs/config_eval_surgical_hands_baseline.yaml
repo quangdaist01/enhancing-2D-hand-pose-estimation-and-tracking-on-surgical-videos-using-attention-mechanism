@@ -36,7 +36,7 @@ preprocess:        default               # String argument to select preprocessi
 pretrained:        0                     # Load pretrained network 
 pseudo_batch_loop: 1                     # Pseudo-batch size multiplier to mimic large minibatches 
 rerun:             1                     # Number of trials to repeat an experiment
-save_dir:          './results'           # Path to results directory
+save_dir:          '/content/drive/MyDrive/DoAn/SurgicalHands/results'           # Path to results directory
 seed:              999                   # Seed for reproducibility 
 weight_decay:      0                     # Weight decay
 
