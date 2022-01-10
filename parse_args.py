@@ -97,7 +97,7 @@ class Parse:
 				milestones=[5],
 				gamma=0.1,
 				epoch=10,
-				save_dir='./results',
+				save_dir='/content/drive/MyDrive/DoAn/SurgicalHands/results',
 				exp='exp',
 				preprocess='default',
 				pretrained=0,
