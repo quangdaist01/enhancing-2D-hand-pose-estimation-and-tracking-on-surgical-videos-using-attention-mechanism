@@ -13,16 +13,16 @@ from PIL import Image
 splits = ['train', 'synth1', 'synth2', 'synth3', 'synth4', 'test']
 # The synths will all be compiled into train.json
 
-target_dir = 'data/hand_labels_mixed'
+target_dir = '/content/drive/MyDrive/DoAn/SurgicalHands/hand_labels_mixed'
 os.makedirs(target_dir, exist_ok=True)
 
 json_ann = []
 for split in splits:
     if 'synth' in split:
-        source_dir = 'data/hand_labels_synth/' + split
+        source_dir = '/content/drive/MyDrive/DoAn/SurgicalHands/hand_labels_synth' + split
         target_file = os.path.join(target_dir, 'train.json')
     else:
-        source_dir = 'data/hand_labels/manual_' + split
+        source_dir = '/content/drive/MyDrive/DoAn/SurgicalHands/hand_labels/manual_' + split
         target_file = os.path.join(target_dir, split + '.json')
 
     print('Compiling files from: {}'.format(source_dir))
