@@ -148,7 +148,7 @@ class ResizeClip(PreprocTransform):
             proc_frame = cv2.resize(frame, (self.size_w, self.size_h))
 
             out_clip.append(proc_frame)
-            if bbox:
+            if bbox is not None:
                 temp_bbox = np.zeros(bbox[frame_ind].shape) - 1
                 for class_ind, box in enumerate(bbox[frame_ind]):
                     if np.array_equal(box, -1 * np.ones(box.shape)):  # only annotated objects
@@ -167,7 +167,7 @@ class ResizeClip(PreprocTransform):
 
         assert (out_clip.shape[1:3] == (self.size_h, self.size_w)), 'Proc frame: {} Crop h,w: {},{}'.format(out_clip.shape, self.size_h, self.size_w)
 
-        if bbox:
+        if bbox is not None:
             return out_clip, np.array(out_bbox)
         else:
             return out_clip
@@ -247,7 +247,7 @@ class CropClip(PreprocTransform):
 
             assert (proc_frame.shape[:2] == (self.crop_h, self.crop_w)), 'Frame shape: {}, Proc frame: {} Crop h,w: {},{}'.format(frame.shape, proc_frame.shape, self.crop_h, self.crop_w)
 
-            if bbox:
+            if bbox is not None:
                 temp_bbox = np.zeros(bbox[frame_ind].shape) - 1
                 for class_ind, box in enumerate(bbox[frame_ind]):
                     if np.array_equal(box, -1 * np.ones(box.shape)):  # only annotated objects
@@ -261,7 +261,7 @@ class CropClip(PreprocTransform):
                     temp_bbox[class_ind, :] = proc_bbox
                 out_bbox.append(temp_bbox)
 
-        if bbox:
+        if bbox is not None:
             return np.array(out_clip), np.array(out_bbox)
         else:
             return np.array(out_clip)
@@ -338,7 +338,7 @@ class CenterCropClip(PreprocTransform):
 # TODO: Extend this to operate on clips, and change to CropClipGuided
 class CropFrameGuided(PreprocTransform):
     """
-    Crop a single frame from a defined bbox 
+    Crop a single frame from a defined bbox
     """
 
     def __init__(self, *args, **kwargs):
@@ -383,14 +383,14 @@ class CropFrameGuided(PreprocTransform):
                     temp_bbox[class_ind, :] = proc_bbox
                 out_bbox.append(temp_bbox)
 
-        if bbox:
+        if bbox is not None:
             return np.array(out_clip), np.array(out_bbox)
         else:
             return np.array(out_clip)
 
 
 class RandomFlipClip(PreprocTransform):
-    """   
+    """
     Specify a flip direction:
     Horizontal, left right flip = 'h' (Default)
     Vertical, top bottom flip = 'v'
@@ -477,13 +477,13 @@ class RandomFlipClip(PreprocTransform):
         if self.direction == 'h':
             output_clip = [cv2.flip(np.array(frame), 1) for frame in clip]
 
-            if bbox:
+            if bbox is not None:
                 output_bbox = [self._h_flip(frame, output_clip[0].shape) for frame in bbox]
 
         elif self.direction == 'v':
             output_clip = [cv2.flip(np.array(frame), 0) for frame in clip]
 
-            if bbox:
+            if bbox is not None:
                 output_bbox = [self._v_flip(frame, output_clip[0].shape) for frame in bbox]
 
         return output_clip, output_bbox
@@ -499,7 +499,7 @@ class RandomFlipClip(PreprocTransform):
         out_clip = np.array(out_clip)
         assert (input_shape == out_clip.shape), "Input shape {}, output shape {}".format(input_shape, out_clip.shape)
 
-        if bbox:
+        if bbox is not None:
             return out_clip, out_bbox
         else:
             return out_clip
@@ -526,7 +526,7 @@ class ToTensorClip(PreprocTransform):
 
         output_clip = torch.from_numpy(np.array(clip)).float()  # Numpy array to Tensor
 
-        if bbox:
+        if bbox is not None:
             bbox = torch.from_numpy(np.array(bbox))
             return output_clip, bbox
         else:
@@ -644,7 +644,7 @@ class RandomRotateClip(PreprocTransform):
         for frame in clip:
             output_clip.append(ndimage.rotate(frame, angle, reshape=False))
 
-        if bbox:
+        if bbox is not None:
             bbox = np.array(bbox)
             output_bboxes = np.zeros(bbox.shape) - 1
             for bbox_ind in range(bbox.shape[0]):
@@ -660,14 +660,14 @@ class RandomRotateClip(PreprocTransform):
 
 class RandomTranslateClip(PreprocTransform):
     """
-    Random horizontal and/or vertical shift on frames in a clip. All frames receive same shifting 
+    Random horizontal and/or vertical shift on frames in a clip. All frames receive same shifting
     Shift will be bounded by object bounding box (if given). Meaning, object will always be in view
     Input numpy array must be of type np.uint8
 
     Args:
         - translate (Tuple)
-            - max_x (float): maximum absolute fraction for horizontal shift 
-            - max_y (float): maximum absolute fraction for vertical shift 
+            - max_x (float): maximum absolute fraction for horizontal shift
+            - max_y (float): maximum absolute fraction for vertical shift
     """
 
     def __init__(self, translate, **kwargs):
@@ -704,7 +704,7 @@ class RandomTranslateClip(PreprocTransform):
         frac_x = np.random.rand() * (2 * self.max_x) - self.max_x
         frac_y = np.random.rand() * (2 * self.max_y) - self.max_y
 
-        if bbox:
+        if bbox is not None:
             out_bbox = []
 
             for frame, box in zip(clip, bbox):
@@ -755,8 +755,8 @@ class RandomZoomClip(PreprocTransform):
 
     Args:
         - scale (Tuple)
-            - min_scale (float): minimum scaling on frame 
-            - max_scale (float): maximum scaling on frame  
+            - min_scale (float): minimum scaling on frame
+            - max_scale (float): maximum scaling on frame
     """
 
     def __init__(self, scale, **kwargs):
@@ -791,7 +791,7 @@ class RandomZoomClip(PreprocTransform):
 
         sc = np.random.uniform(self.min_scale, self.max_scale)
 
-        if bbox:
+        if bbox is not None:
             out_bbox = []
 
             for frame, box in zip(clip, bbox):
@@ -856,11 +856,11 @@ class AffineTransformClip(PreprocTransform):
     Apply non-random affine transform to all frames in a clip.
 
     Args:
-        - center 
+        - center
         - scale (Tuple)
-            - hsc (float): horizontal scaling on frame 
-            - vsc (float): vertical scaling on frame  
-        - shift  
+            - hsc (float): horizontal scaling on frame
+            - vsc (float): vertical scaling on frame
+        - shift
         - rot
     """
 
@@ -884,9 +884,9 @@ class AffineTransformClip(PreprocTransform):
 
     def _update_params(self, center, scale, shift=np.array([0., 0.]), in_rot=None):
         """
-        scale 
+        scale
         center
-        shift 
+        shift
         """
         self.center = center
         self.scale = scale
@@ -1024,7 +1024,7 @@ class SubtractRGBMean(PreprocTransform):
             proc_frame = (frame - self.rgb_mean) / self.rgb_std
             out_clip.append(proc_frame)
 
-        if bbox:
+        if bbox is not None:
             return out_clip, bbox
         else:
             return out_clip
@@ -1086,7 +1086,7 @@ class ApplyToPIL(PreprocTransform):
 
 class ApplyToTensor(PreprocTransform):
     """
-    Apply standard pytorch transforms that require pytorch Tensors as input to their __call__ function, for example Normalize 
+    Apply standard pytorch transforms that require pytorch Tensors as input to their __call__ function, for example Normalize
 
     NOTE: The __call__ function of this class converts the clip to a pytorch float tensor. If other transforms require PIL inputs, call them prior tho this one
     Bounding box coordinates are not guaranteed to be transformed properly!
@@ -1119,7 +1119,7 @@ class ApplyToTensor(PreprocTransform):
 
 class ApplyOpenCV(PreprocTransform):
     """
-    Apply opencv transforms that require numpy arrays as input to their __call__ function, for example Rotate 
+    Apply opencv transforms that require numpy arrays as input to their __call__ function, for example Rotate
 
     NOTE: The __call__ function of this class converts the clip to a Numpy array. If other transforms require PIL inputs, call them prior tho this one
 
@@ -1425,3 +1425,4 @@ class TestPreproc(object):
 if __name__ == '__main__':
     test = TestPreproc()
     test.run_tests()
+
