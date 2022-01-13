@@ -1620,17 +1620,6 @@ def seqtype2idx(seqtype):
 
 
 def posetrack18_id2fname(image_id):
-    """Generates filename given image id
-
-        Args:
-          id: integer in the format TSSSSSSFFFF,
-              T encodes the sequence source (1: 'mpii', 2: 'bonn', 3: 'mpiinew')
-              SSSSSS is 6-digit index of the sequence
-              FFFF is 4-digit index of the image frame
-
-        Returns:
-          name of the video sequence
-        """
     seqtype_idx = image_id // 10000000000
     seqidx = (image_id % 10000000000) // 10000
     frameidx = image_id % 10000
