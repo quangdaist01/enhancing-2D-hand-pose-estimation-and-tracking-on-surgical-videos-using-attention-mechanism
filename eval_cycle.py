@@ -140,6 +140,7 @@ def eval(**args):
         for step, data in enumerate(eval_loader):
             x_input = data['data']
             annotations = data['annots']
+            annotations['data'] = x_input
 
             B, _, T, H, W = x_input.shape  # Expect: B,3,T,384,288 (T here is not time, it's all of the objects detected on that frame)
 
