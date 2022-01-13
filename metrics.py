@@ -672,7 +672,8 @@ class Save_Video_Keypoints():
             #Use same numpy image for all objects on same frame
             if self.prev_f_path == None:
                 #'data' here must be original image
-                self.img = data['data'][b].cpu().numpy()
+                self.img = cv2.imread(f_path)[..., ::-1]
+                # self.img = data['data'][b].cpu().numpy()
             elif self.prev_f_path != f_path: #New frame
                 frame_id = self.prev_f_path.split('/')[-1].split('.')[0]
                 frame_id = int(''.join(c for c in frame_id if c.isdigit())) #strip non-numbers
@@ -711,7 +712,8 @@ class Save_Video_Keypoints():
                 self.vout.write(self.img)
 
                 #'data' here must be original image
-                self.img = data['data'][b].cpu().numpy()
+                self.img = cv2.imread(f_path)[..., ::-1]
+                # self.img = data['data'][b].cpu().numpy()
 
             #seq_name = f_path.split('/')[-2]
             seq_name = vid_id[b]
