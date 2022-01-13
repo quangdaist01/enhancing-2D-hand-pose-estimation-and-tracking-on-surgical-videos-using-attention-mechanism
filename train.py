@@ -207,7 +207,7 @@ def train(**args):
         # Start: Training Loop
         print('Starting Schedulers lr: {}'.format(scheduler.get_last_lr()[0]))
         for epoch in range(start_epoch, args['epoch']):
-            acc_metric = Metrics(**args, ndata=len(train_loader.dataset), logger=wandb if use_wandb else None)
+            acc_metric = Metrics(**args, ndata=len(train_loader.dataset))
             running_loss = 0.0
             print('Epoch: ', epoch)
 
@@ -345,7 +345,7 @@ def train(**args):
 
 def valid(valid_loader, running_acc, model, device):
     0.
-    acc_metric = Metrics(**args, ndata=len(valid_loader.dataset), logger=wandb if use_wandb else None)
+    acc_metric = Metrics(**args, ndata=len(valid_loader.dataset))
     model.eval()
 
     with torch.no_grad():
