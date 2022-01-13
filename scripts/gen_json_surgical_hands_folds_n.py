@@ -16,7 +16,7 @@ source_res_dir   = '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_rel
 
 target_json_dir = '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/pub_surgical/'
 
-target_poseval_dir = 'poseval_hand/py' #TODO: Replace with poseval code
+target_poseval_dir = '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/poseval_hand/py' #TODO: Replace with poseval code
 
 #certain factors (poseval) requires numeric video names
 vid2idx = {'fTFTk_q8dh0':'000001'

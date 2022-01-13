@@ -70,7 +70,7 @@ num_deconv_kernels: [4,4,4]
 num_layers:         152
 
 #Poseval evaluation for Hands.
-poseval_dir: 'data/poseval_hand/py'
+poseval_dir: '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/poseval_hand/py'
 
 #For the recursively trained models
 min_temporal_dist: 4 
