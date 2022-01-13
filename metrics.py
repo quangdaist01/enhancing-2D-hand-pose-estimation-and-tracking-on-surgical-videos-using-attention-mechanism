@@ -603,7 +603,7 @@ class Save_Video_Keypoints():
         self.conf_threshold = kwargs['conf_threshold'] 
 
         self.vout = cv2.VideoWriter()
-        self.fourcc = cv2.VideoWriter_fourcc(*'MP4V')
+        self.fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         self.fps = 10 #29.97
         self.vout_path  = None 
         self.prev_f_path = None 
@@ -931,7 +931,7 @@ class Save_Frame_Video_Heatmaps():
         self.conf_threshold = kwargs['conf_threshold'] 
 
         self.vout = cv2.VideoWriter()
-        self.fourcc = cv2.VideoWriter_fourcc(*'MP4V')
+        self.fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         #self.fps = 29.97
         self.fps = 10
         self.vout_path  = None 
