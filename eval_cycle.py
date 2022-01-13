@@ -248,7 +248,7 @@ def eval(**args):
                     else:
                         prev_heatmap = None
 
-                    out = model.forward_one(image_crops, prev_heatmap, {'frame_id': frame_id, 'batch_num': b})
+                    out = model.forward_one(image_crops, prev_heatmap)
 
                     if isinstance(out, tuple):
                         heatmap = out[0]
