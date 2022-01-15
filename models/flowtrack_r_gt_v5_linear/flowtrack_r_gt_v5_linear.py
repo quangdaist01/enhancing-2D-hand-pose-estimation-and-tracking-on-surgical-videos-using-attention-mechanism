@@ -585,12 +585,12 @@ class FlowTrack_R_GT_V5_Linear(nn.Module):
         #plt.close()
         '''
 
-        # if self.save_feat or self.out_feat:
-        #    vis = self.pooling(vis)
-        #    vis = torch.flatten(vis,1)
-        #    return x1, vis 
-        # else:
-        return x1
+        if self.save_feat or self.out_feat:
+            vis = self.pooling(vis)
+            vis = torch.flatten(vis,1)
+            return x1, vis
+        else:
+            return x1
 
     def init_weights(self, pretrained='./weights/resnet152-b121ed2d.pth'):
         if os.path.isfile(pretrained):
