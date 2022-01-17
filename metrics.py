@@ -672,8 +672,8 @@ class Save_Video_Keypoints():
             #Use same numpy image for all objects on same frame
             if self.prev_f_path == None:
                 #'data' here must be original image
-                self.img = cv2.imread(f_path)[..., ::-1]
-                # self.img = data['data'][b].cpu().numpy()
+                self.img = cv2.imread(f_path)
+                
             elif self.prev_f_path != f_path: #New frame
                 frame_id = self.prev_f_path.split('/')[-1].split('.')[0]
                 frame_id = int(''.join(c for c in frame_id if c.isdigit())) #strip non-numbers
@@ -709,10 +709,12 @@ class Save_Video_Keypoints():
                             self.xy_positions[frame_id][tid] = pos 
                         '''
                 
-                self.vout.write(self.img)
+                # self.vout.write(self.img)
+                # bgr for less scary
+                self.vout.write(self.img[..., ::-1])
 
                 #'data' here must be original image
-                self.img = cv2.imread(f_path)[..., ::-1]
+                self.img = cv2.imread(f_path)
                 # self.img = data['data'][b].cpu().numpy()
 
             #seq_name = f_path.split('/')[-2]
@@ -878,7 +880,10 @@ class Save_Video_Keypoints():
                         self.xy_positions[frame_id][tid] = pos 
                     '''
 
-            self.vout.write(self.img)
+            # self.vout.write(self.img)
+            # bgr for less scary
+            self.vout.write(self.img[..., ::-1])
+
 
             '''
             import matplotlib.pyplot as plt 
