@@ -349,7 +349,7 @@ class FlowTrack_R_GT_V5_Linear(nn.Module):
                     prev_heatmap = []
                     keep_priors = []
                     self.total_priors += B
-                    use_pred_prior_prob = min(0.10 * self.epoch, 1)  # probability of using prediction prior
+                    use_pred_prior_prob = min(1/3 * self.epoch, 1)  # probability of using prediction prior
                     for i, hm in enumerate(output_prev):
                         if np.random.rand() > use_pred_prior_prob and load_type != 'val':
                             self.use_gt += 1
