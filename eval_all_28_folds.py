@@ -344,6 +344,12 @@ def eval(**args):
                 outputs = outputs['outputs']
 
             acc = acc_metric.get_accuracy(outputs, annotations)
+            if acc != 0:
+              with open('/content/eval_all_folds_results.txt', 'a+') as f:
+                  f.seek(0)
+                  row_len = len(f.readlines())
+                  f.write(str(row_len) + ' ' + str(acc))
+                  f.write("\n")
 
             if step % 100 == 0:
                 print('Step: {}/{} | {} acc: {:.4f}'.format(step, len(eval_loader), args['load_type'], acc))
