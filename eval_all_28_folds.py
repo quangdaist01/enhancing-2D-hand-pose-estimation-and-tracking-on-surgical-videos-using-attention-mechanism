@@ -344,6 +344,12 @@ def eval(**args):
                 outputs = outputs['outputs']
 
             acc = acc_metric.get_accuracy(outputs, annotations)
+            if acc != 0:
+              with open('/content/eval_all_folds_results.txt', 'a+') as f:
+                  f.seek(0)
+                  row_len = len(f.readlines())
+                  f.write(str(row_len) + ' ' + str(acc))
+                  f.write("\n")
 
             if step % 100 == 0:
                 print('Step: {}/{} | {} acc: {:.4f}'.format(step, len(eval_loader), args['load_type'], acc))
@@ -376,9 +382,12 @@ if __name__ == '__main__':
     np.random.seed(args['seed'])
 
     for fold_num in range(28):
+        tags = f'folda{fold_num}'
         json_path = f'/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/pub_surgical/annotations_folda{fold_num}'
         pretrained_path = f'/content/drive/MyDrive/DoAn/SurgicalHands/weights/author/FlowTrack_r_gt_v5_linear/folda{fold_num}.pkl'
-        args['json_path'] = args['json_path'] = json_path
-        args['pretrained'] = args['pretrained'] = pretrained_path
+
+        args['tags'] = [tags]
+        args['json_path'] = json_path
+        args['pretrained'] = pretrained_path
 
         eval(**args)
