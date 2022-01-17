@@ -1,5 +1,5 @@
 # Preprocessing
-clip_length:       1                         # Number of frames within a clip 
+clip_length:       1                         # Number of frames within a clip
 clip_offset:       0                         # Frame offset between beginning of video and clip (1st clip only) 
 clip_stride:       0                         # Frame offset between successive frames
 crop_shape:        [368,368]                 # (Height, Width) of frame  
@@ -18,7 +18,7 @@ acc_metric:        PCK_FlowTrack         # Accuracy metric
 batch_size:        12                    # Numbers of videos in a mini-batch 
 dataset:           Surgical_Hands_v2     # Name of dataset 
 debug:             1                     # If True, do not plot, save, or create data files 
-epoch:             20                    # Total number of epochs 
+epoch:             5                    # Total number of epochs
 exp:               'train_surg_hands'    # Experiment name
 gamma:             0.1                   # Multiplier with which to change learning rate
 grad_max_norm:     0                     # Norm for gradient clipping 
