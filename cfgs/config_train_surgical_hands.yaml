@@ -17,7 +17,7 @@ divide_std:        [58.395, 57.12, 57.375]     # Divide by standard deviation (R
 acc_metric:        PCK_FlowTrack         # Accuracy metric 
 batch_size:        12                    # Numbers of videos in a mini-batch 
 dataset:           Surgical_Hands_v2     # Name of dataset 
-debug:             1                     # If True, do not plot, save, or create data files 
+debug:             0                     # If True, do not plot, save, or create data files
 epoch:             5                    # Total number of epochs
 exp:               'train_surg_hands'    # Experiment name
 gamma:             0.1                   # Multiplier with which to change learning rate

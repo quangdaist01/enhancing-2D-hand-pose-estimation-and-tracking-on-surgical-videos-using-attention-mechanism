@@ -17,7 +17,7 @@ divide_std:        [58.395, 57.12, 57.375]     # Divide by standard deviation (R
 acc_metric:        Eval_PoseTrack18_det  # Accuracy metric 
 batch_size:        12                    # Numbers of videos in a mini-batch 
 dataset:           Surgical_Hands        # Name of dataset 
-debug:             1                     # If True, do not plot, save, or create data files 
+debug:             0                     # If True, do not plot, save, or create data files
 epoch:             20                    # Total number of epochs 
 exp:               'eval_surgical_hands' # Experiment name
 gamma:             0.1                   # Multiplier with which to change learning rate
