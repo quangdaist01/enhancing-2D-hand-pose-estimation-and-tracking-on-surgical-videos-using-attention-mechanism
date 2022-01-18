@@ -54,24 +54,15 @@ def train(**args):
         # Generate Results Directory
         d = datetime.datetime.today()
         date = d.strftime('%Y%m%d-%H%M%S')
-        result_dir = os.path.join(args['save_dir'], args['model'], '_'.join((args['dataset'], args['exp'], date)))
+        result_dir = os.path.join(args['save_dir'], '_'.join((args['dataset'], args['exp'], date)))
         log_dir = os.path.join(result_dir, 'logs')
         save_dir = os.path.join(result_dir, 'checkpoints')
 
-        run_id = args['exp']
         use_wandb = args.get('use_wandb', False)
         if not args['debug']:
 
             if use_wandb:
                 wandb.init(project=args['dataset'], name=args['exp'], config=args, tags=args['tags'])
-
-                # Replace result dir with wandb unique id, much easier to find checkpoints
-                run_id = wandb.run.id
-
-            if run_id:
-                result_dir = os.path.join(args['save_dir'], args['model'], '_'.join((args['dataset'], run_id)))
-                log_dir = os.path.join(result_dir, 'logs')
-                save_dir = os.path.join(result_dir, 'checkpoints')
 
             os.makedirs(result_dir, exist_ok=True)
             os.makedirs(log_dir, exist_ok=True)
