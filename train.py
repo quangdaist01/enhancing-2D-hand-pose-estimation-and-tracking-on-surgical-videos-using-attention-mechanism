@@ -311,16 +311,10 @@ def train(**args):
             if args['model'] in prior_track_models:
                 model.reset_vals()  # Reset the values for tracking usage of predictions priors or gt priors
 
-            if not args['debug']:
-                if use_wandb:
-                    wandb.log({'epoch': epoch, 'val accuracy': running_acc[-1]})
-
-                writer.add_scalar(args['dataset'] + '/' + args['model'] + '/validation_accuracy', 100. * running_acc[-1], epoch * len(train_loader) + step)
-
-                # Save Latest Model
-                save_path = os.path.join(save_dir, args['dataset'] + '_latest_model.pkl')
-                save_checkpoint(epoch, step, model, optimizer, save_path)
-                print('Lastest val accuracy checkpoint saved to: {}'.format(save_path))
+            # Save Latest Model
+            save_path = os.path.join(save_dir, args['dataset'] + '_latest_model.pkl')
+            save_checkpoint(epoch, step, model, optimizer, save_path)
+            print('Lastest val accuracy checkpoint saved to: {}'.format(save_path))
 
             print('Accuracy of the network on the validation set: %f %%\n' % (100. * running_acc[-1]))
 
@@ -328,15 +322,10 @@ def train(**args):
             if best_val_acc < running_acc[-1]:
                 best_val_acc = running_acc[-1]
 
-                if not args['debug']:
-                    # Log best validation accuracy
-                    if use_wandb:
-                        wandb.run.summary['best_accuracy'] = best_val_acc
-
-                    # Save Current Model
-                    save_path = os.path.join(save_dir, args['dataset'] + '_best_model.pkl')
-                    save_checkpoint(epoch, step, model, optimizer, save_path)
-                    print('Best val accuracy checkpoint saved to: {}'.format(save_path))
+                # Save Current Model
+                save_path = os.path.join(save_dir, args['dataset'] + '_best_model.pkl')
+                save_checkpoint(epoch, step, model, optimizer, save_path)
+                print('Best val accuracy checkpoint saved to: {}'.format(save_path))
 
         if not args['debug']:
             # Close Tensorboard Element
