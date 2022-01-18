@@ -27,7 +27,7 @@ labels:            2                     # Number of total classes in the datase
 load_type:         train_val             # Environment selection, to include only training/training and validation/testing dataset
 loss_type:         JointsMSELoss         # Loss function
 lr:                0.001                 # Learning rate
-milestones:        5                     # Epoch values to change learning rate     
+milestones:        [5]                     # Epoch values to change learning rate
 model:             FlowTrack             # Name of model to be loaded  
 momentum:          0.9                   # Momentum value in optimizer
 num_workers:       4                     # Number of CPU worker used to load data
