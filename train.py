@@ -312,7 +312,7 @@ def train(**args):
                 model.reset_vals()  # Reset the values for tracking usage of predictions priors or gt priors
 
             # Save Latest Model
-            save_path = os.path.join(save_dir, args['dataset'] + '_latest_model.pkl')
+            save_path = os.path.join(save_dir, args['exp'] + '_latest_model.pkl')
             save_checkpoint(epoch, step, model, optimizer, save_path)
             print('Lastest val accuracy checkpoint saved to: {}'.format(save_path))
 
