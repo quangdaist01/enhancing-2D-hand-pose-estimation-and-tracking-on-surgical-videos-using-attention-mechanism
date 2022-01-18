@@ -323,7 +323,7 @@ def train(**args):
                 best_val_acc = running_acc[-1]
 
                 # Save Current Model
-                save_path = os.path.join(save_dir, args['dataset'] + '_best_model.pkl')
+                save_path = os.path.join(save_dir, args['exp'] + '_best_model.pkl')
                 save_checkpoint(epoch, step, model, optimizer, save_path)
                 print('Best val accuracy checkpoint saved to: {}'.format(save_path))
 
