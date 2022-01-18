@@ -56,7 +56,7 @@ def train(**args):
         date = d.strftime('%Y%m%d-%H%M%S')
         result_dir = os.path.join(args['save_dir'], '_'.join((args['dataset'], args['exp'], date)))
         log_dir = os.path.join(result_dir, 'logs')
-        save_dir = os.path.join(result_dir, 'checkpoints')
+        save_dir = result_dir
 
         use_wandb = args.get('use_wandb', False)
         if not args['debug']:
