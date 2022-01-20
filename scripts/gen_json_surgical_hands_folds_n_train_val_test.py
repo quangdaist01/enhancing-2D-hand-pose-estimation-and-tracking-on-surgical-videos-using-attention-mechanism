@@ -3,31 +3,45 @@
 # Uses Groundtruth annotations
 
 import json
-
-from PIL import Image
 import numpy as np
-
-source_json_file = r'C:\Users\quang\PycharmProjects\DL_NLP_TUH\Surgical_Hands\data\annnotations_lite.json'
-source_res_dir = r'C:\Users\quang\PycharmProjects\DL_NLP_TUH\Surgical_Hands\data\images'
+import os
+from PIL import Image
 
 source_json_file = '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/annotations.json'
-source_res_dir   = '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/images'
-
+source_res_dir = '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/images'
 target_json_dir = '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/pub_surgical/'
-
-target_poseval_dir = '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/poseval_hand/py' #TODO: Replace with poseval code
-
-
-import os
-
-os.listdir(r'C:\Users\quang\PycharmProjects\DL_NLP_TUH\Surgical_Hands\data\images')
+target_poseval_dir = '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/poseval_hand/py'  # TODO: Replace with poseval code
 
 # certain factors (poseval) requires numeric video names
-vid2idx = {'3d384b2969e': '000001'
-        , '33384b2969e': '000002'
-        , '44484b2969e': '000003'
+vid2idx = {'fTFTk_q8dh0': '000001'
+        , 'e45vsP9CM2c': '000002'
+        , '19P6qybcoUE': '000003'
+        , 'eb984ec0cf5': '000004'
+        , '5uKdXnreV1s': '000005'
+        , 'alzo8uZzhpk': '000006'
+        , 'v_AngiPw1wc': '000007'
+        , '0318dd3e7e3': '000008'
+        , '09116df3238': '000009'
+        , '6iSraYGcHBk': '000010'
+        , 'B5K_QYc_Y2o': '000011'
+        , 'QokL8kNka9g': '000012'
+        , 'K4WxM7z1PKo': '000013'
+        , 'GkfnPAgdaUI': '000014'
+        , 'a8c1424ebcd': '000015'
+        , '8jXjg4uaES0': '000016'
+        , '68e2d14b311': '000017'
+        , 'HWpy-ZzKSQE': '000018'
+        , 'a7d419fca90': '000019'
+        , '01560685f81': '000020'
+        , '3d384b2969e': '000021'
+        , '5449be235ad': '000022'
+        , '3745b0bac16': '000023'
+        , 'TsG-g925r8s': '000024'
+        , 'G2lrwv61Mss': '000025'
+        , '9NM1_cC5PfI': '000026'
+        , 'ZjjgFgisJwI': '000027'
+        , '9DhftZeReiI': '000028'
            }
-
 ##
 all_videos = ['QokL8kNka9g', 'e45vsP9CM2c', '19P6qybcoUE', '01560685f81',
               '3745b0bac16', '5449be235ad', 'K4WxM7z1PKo', 'TsG-g925r8s',
@@ -38,14 +52,14 @@ all_videos = ['QokL8kNka9g', 'e45vsP9CM2c', '19P6qybcoUE', '01560685f81',
               '09116df3238', '68e2d14b311', 'a7d419fca90', '8jXjg4uaES0']
 
 target_dir = os.path.join(target_json_dir, 'annotations_folda99')
-poseval_dir = os.path.join(target_json_dir, 'target_folda99')
+poseval_dir = os.path.join(target_poseval_dir, 'target_folda99')
 val_videos = ['QokL8kNka9g', '19P6qybcoUE', '09116df3238', 'a7d419fca90']
 test_videos = ['e45vsP9CM2c', '01560685f81', '68e2d14b311', '8jXjg4uaES0']
 train_videos = [video for video in all_videos if video not in [*val_videos, *test_videos]]
 
-val_videos = [ val_videos[0] ]
-test_videos = [ test_videos[0] ]
-train_videos = [ train_videos[0] ]
+val_videos = [val_videos[0]]
+test_videos = [test_videos[0]]
+train_videos = [train_videos[0]]
 
 ##
 splits = ['train', 'val', 'test']
