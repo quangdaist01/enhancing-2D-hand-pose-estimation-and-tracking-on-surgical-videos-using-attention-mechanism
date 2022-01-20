@@ -22,7 +22,7 @@ epoch:             5                    # Total number of epochs
 exp:               'train_surg_hands'    # Experiment name
 gamma:             0.1                   # Multiplier with which to change learning rate
 grad_max_norm:     0                     # Norm for gradient clipping 
-json_path:         './data/pub_surgical' # Path to the json file for the given dataset
+json_path:         '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/pub_surgical/annotations_folda99' # Path to the json file for the given dataset
 labels:            2                     # Number of total classes in the dataset
 load_type:         train_val             # Environment selection, to include only training/training and validation/testing dataset
 loss_type:         JointsMSELoss         # Loss function
