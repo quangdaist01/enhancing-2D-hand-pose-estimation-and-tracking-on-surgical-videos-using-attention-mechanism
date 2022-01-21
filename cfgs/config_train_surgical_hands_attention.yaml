@@ -18,7 +18,7 @@ acc_metric:        PCK_FlowTrack         # Accuracy metric
 batch_size:        12                    # Numbers of videos in a mini-batch 
 dataset:           Surgical_Hands_v2     # Name of dataset 
 debug:             0                     # If True, do not plot, save, or create data files
-epoch:             5                    # Total number of epochs
+epoch:             10                    # Total number of epochs
 exp:               'train_surg_hands'    # Experiment name
 gamma:             0.1                   # Multiplier with which to change learning rate
 grad_max_norm:     0                     # Norm for gradient clipping 
