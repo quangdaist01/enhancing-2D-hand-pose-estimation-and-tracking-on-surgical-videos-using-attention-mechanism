@@ -198,7 +198,7 @@ class FlowTrack_R_GT_V5_Linear_Attention_Ver2(nn.Module):
         self.use_gt = 0  # or no priors exist
         self.use_pred = 0
 
-        super(FlowTrack_R_GT_V5_Attention_Ver2, self).__init__()
+        super(FlowTrack_R_GT_V5_Linear_Attention_Ver2, self).__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
                                bias=False)
         self.bn1 = nn.BatchNorm2d(64, momentum=BN_MOMENTUM)
