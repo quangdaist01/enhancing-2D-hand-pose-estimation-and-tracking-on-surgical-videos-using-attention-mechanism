@@ -19,7 +19,7 @@ os.makedirs(target_dir, exist_ok=True)
 json_ann = []
 for split in splits:
     if 'synth' in split:
-        source_dir = '/content/drive/MyDrive/DoAn/SurgicalHands/hand_labels_synth' + split
+        source_dir = '/content/drive/MyDrive/DoAn/SurgicalHands/hand_labels_synth/' + split
         target_file = os.path.join(target_dir, 'train.json')
     else:
         source_dir = '/content/drive/MyDrive/DoAn/SurgicalHands/hand_labels/manual_' + split
