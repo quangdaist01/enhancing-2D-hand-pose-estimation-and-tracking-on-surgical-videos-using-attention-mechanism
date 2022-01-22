@@ -111,6 +111,7 @@ class Bottleneck(nn.Module):
                                bias=False)
         self.bn3 = nn.BatchNorm2d(planes * self.expansion,
                                   momentum=BN_MOMENTUM)
+        self.se = SELayer(planes * self.expansion)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
         self.stride = stride
@@ -128,6 +129,7 @@ class Bottleneck(nn.Module):
 
         out = self.conv3(out)
         out = self.bn3(out)
+        out = self.se(out)
 
         if self.downsample is not None:
             residual = self.downsample(x)
