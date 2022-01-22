@@ -223,7 +223,7 @@ class FlowTrack_R_GT_V5_Linear_Attention_Ver2(nn.Module):
                                        out_channels=21,
                                        kernel_size=3,
                                        aug=True,
-                                       Nh=4,
+                                       Nh=2,
                                        shape=96)
 
         self.prior_update = nn.Sequential(  # use (weighted?) prior to update current output
