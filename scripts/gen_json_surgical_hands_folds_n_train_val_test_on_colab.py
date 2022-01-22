@@ -8,7 +8,7 @@ import os
 from PIL import Image
 
 source_json_file = '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/annotations.json'
-source_res_dir = '/content/images'
+source_res_dir = '/content/surgical_hands_release/images'
 target_json_dir = '/content/pub_surgical/'
 target_poseval_dir = '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/poseval_hand/py'  # TODO: Replace with poseval code
 
