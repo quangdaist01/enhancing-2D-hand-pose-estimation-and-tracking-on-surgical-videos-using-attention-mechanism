@@ -18,11 +18,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import cv2
+import logging
+import numpy as np
 import os
 import time
-import logging
-
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -30,8 +30,6 @@ import torchvision
 from collections import OrderedDict
 
 import datasets.preprocessing_transforms as pt
-
-import cv2
 
 BN_MOMENTUM = 0.1
 logger = logging.getLogger(__name__)
@@ -210,21 +208,15 @@ class FlowTrack_R_GT_V5_Linear_Attention_Ver2(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
 
         self.sigmoid = nn.Sigmoid()
-        # self.prior_attention = nn.Sequential(
-        #         nn.Conv2d(64 + self.num_joints, 256, kernel_size=3, padding=1, stride=1),  # 64 channels + num joints
-        #         nn.ReLU(),
-        #         nn.Conv2d(256, 256, kernel_size=2, stride=2),
-        #         nn.ReLU(),
-        #         nn.ConvTranspose2d(256, self.num_joints, kernel_size=4, padding=1, stride=2),
-        #         nn.ReLU()
-        # )
-        from .model import ARB_Add
-        self.prior_attention = ARB_Add(in_channels=64 + self.num_joints,
-                                       out_channels=21,
-                                       kernel_size=3,
-                                       aug=True,
-                                       Nh=2,
-                                       shape=96)
+
+        from .model import aug_block
+        self.prior_attention = aug_block(in_channels=64 + self.num_joints,
+                                         out_channels=21,
+                                         kernel_size=3,
+                                         dk=0.1,
+                                         dv=0.1,
+                                         Nh=2,
+                                         shape=96)
 
         self.prior_update = nn.Sequential(  # use (weighted?) prior to update current output
                 nn.Conv2d(2 * self.num_joints, 256, kernel_size=3, padding=1, stride=1),
