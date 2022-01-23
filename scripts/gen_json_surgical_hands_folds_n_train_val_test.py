@@ -53,13 +53,13 @@ all_videos = ['QokL8kNka9g', 'e45vsP9CM2c', '19P6qybcoUE', '01560685f81',
 
 target_dir = os.path.join(target_json_dir, 'annotations_folda99')
 poseval_dir = os.path.join(target_poseval_dir, 'target_folda99')
+
+os.makedirs(target_dir, exist_ok=True)
+os.makedirs(poseval_dir, exist_ok=True)
+
 val_videos = ['QokL8kNka9g', '19P6qybcoUE', '09116df3238', 'a7d419fca90']
 test_videos = ['e45vsP9CM2c', '01560685f81', '68e2d14b311', '8jXjg4uaES0']
 train_videos = [video for video in all_videos if video not in [*val_videos, *test_videos]]
-
-val_videos = [val_videos[0]]
-test_videos = [test_videos[0]]
-train_videos = [train_videos[0]]
 
 ##
 splits = ['train', 'val', 'test']
