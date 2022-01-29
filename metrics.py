@@ -594,7 +594,7 @@ class Save_Video_Keypoints():
         self.count = 0
 
         self.json_anns = {}
-        self.output_dir = os.path.join('./outputs',kwargs['model']+'-'+kwargs['exp'])
+        self.output_dir = os.path.join("/content/drive/MyDrive/DoAn/SurgicalHands/Videos_output",kwargs['model']+'-'+kwargs['exp'])
         os.makedirs(self.output_dir, exist_ok=True)
 
         self.viz = kwargs['viz']
