@@ -22,7 +22,7 @@ def create_model_object(*args, **kwargs):
         if mf in ignore_files:
             continue
 
-        module_name = mf[:-3].replace('/content/Surgical_Hands_RELEASE/', '').replace('/','.')
+        module_name = mf[:-3].replace('/content/Enhancing-2D-hand-pose-estimation-and-tracking-on-surgical-videos-using-attention-mechanism/', '').replace('/','.')
         module = importlib.import_module(module_name)
         module_lower = list(map(lambda module_x: module_x.lower(), dir(module)))
 
