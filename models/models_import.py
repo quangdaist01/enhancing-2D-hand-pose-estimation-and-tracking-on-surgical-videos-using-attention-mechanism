@@ -12,10 +12,10 @@ def create_model_object(*args, **kwargs):
     Returns:
         model: initialized model object 
     """
-    sys.path.append('/content/Surgical_Hands_RELEASE')
+    sys.path.append('/content/Enhancing-2D-hand-pose-estimation-and-tracking-on-surgical-videos-using-attention-mechanism')
     model_name = kwargs['model']
 
-    model_files = glob.glob('/content/Surgical_Hands_RELEASE/models/*/*.py')
+    model_files = glob.glob('/content/Enhancing-2D-hand-pose-estimation-and-tracking-on-surgical-videos-using-attention-mechanism/models/*/*.py')
     ignore_files = ['__init__.py', 'models_import.py']
 
     for mf in model_files:
