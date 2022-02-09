@@ -19,3 +19,4 @@ pbs/*
 *.pt
 
 /wandb
+/poseval_hand/
