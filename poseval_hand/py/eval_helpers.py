@@ -189,21 +189,21 @@ def printTableTracking():
 
 
 # compute recall/precision curve (RPC) values
-def computeRPC(scores, labels, totalPos):
+def computeRPC(scores, labels, total_positive):
     precision = np.zeros(len(scores))
     recall = np.zeros(len(scores))
-    npos = 0;
+    num_positive = 0;
 
     idxsSort = np.array(scores).argsort()[::-1]
     labelsSort = labels[idxsSort];
 
     for sidx in range(len(idxsSort)):
         if labelsSort[sidx] == 1:
-            npos += 1
+            num_positive += 1
         # recall: how many true positives were found out of the total number of positives?
-        recall[sidx] = 1.0 * npos / totalPos
+        recall[sidx] = 1.0 * num_positive / total_positive
         # precision: how many true positives were found out of the total number of samples?
-        precision[sidx] = 1.0 * npos / (sidx + 1)
+        precision[sidx] = 1.0 * num_positive / (sidx + 1)
 
     return precision, recall, idxsSort
 
@@ -402,11 +402,11 @@ def load_data_dir(argv):
         for imgidx in range(len(gt)):
             gt[imgidx]["seq_id"] = i
             gt[imgidx]["seq_name"] = os.path.basename(filenames[i]).split('.')[0]
-            for ridxGT in range(len(gt[imgidx]["annorect"])):
-                if "track_id" in gt[imgidx]["annorect"][ridxGT].keys():
+            for idx_gt in range(len(gt[imgidx]["annorect"])):
+                if "track_id" in gt[imgidx]["annorect"][idx_gt].keys():
                     # adjust track_ids to make them unique across all sequences
-                    assert (gt[imgidx]["annorect"][ridxGT]["track_id"][0] < MAX_TRACK_ID)
-                    gt[imgidx]["annorect"][ridxGT]["track_id"][0] += i * MAX_TRACK_ID
+                    assert (gt[imgidx]["annorect"][idx_gt]["track_id"][0] < MAX_TRACK_ID)
+                    gt[imgidx]["annorect"][idx_gt]["track_id"][0] += i * MAX_TRACK_ID
         gtFramesAll += gt
         gtBasename = os.path.basename(filenames[i])
         predFilename = pred_dir + gtBasename
@@ -448,219 +448,215 @@ def writeJson(val, fname):
         json.dump(val, data_file)
 
 
-def assignGTmulti(gtFrames, prFrames, distThresh):
-    assert (len(gtFrames) == len(prFrames))
+def assignGTmulti(gt_frames_all, pred_frames_all, dish_thresh):
+    assert (len(gt_frames_all) == len(pred_frames_all))
 
-    nJoints = Joint().count
+    num_joint = Joint().count
     # part detection scores
-    scoresAll = {}
+    scores_all = {}
     # positive / negative labels
-    labelsAll = {}
+    labels_all = {}
     # number of annotated GT joints per image
-    nGTall = np.zeros([nJoints, len(gtFrames)])
-    for pidx in range(nJoints):
-        scoresAll[pidx] = {}
-        labelsAll[pidx] = {}
-        for imgidx in range(len(gtFrames)):
-            scoresAll[pidx][imgidx] = np.zeros([0, 0], dtype=np.float32)
-            labelsAll[pidx][imgidx] = np.zeros([0, 0], dtype=np.int8)
-
-    # GT track IDs
-    []
-
-    # prediction track IDs
-    []
+    num_GT_all = np.zeros([num_joint, len(gt_frames_all)])
+    for pidx in range(num_joint):
+        scores_all[pidx] = {}
+        labels_all[pidx] = {}
+        for img_idx in range(len(gt_frames_all)):
+            scores_all[pidx][img_idx] = np.zeros([0, 0], dtype=np.float32)
+            labels_all[pidx][img_idx] = np.zeros([0, 0], dtype=np.int8)
 
     # number of GT poses
-    nGTPeople = np.zeros((len(gtFrames), 1))
+    num_GT_hands = np.zeros((len(gt_frames_all), 1))
     # number of predicted poses
-    nPrPeople = np.zeros((len(gtFrames), 1))
+    num_pred_hands = np.zeros((len(gt_frames_all), 1))
 
     # container to save info for computing MOT metrics
-    motAll = {}
+    MOT_all = {}
 
-    for imgidx in range(len(gtFrames)):
+    for img_idx in range(len(gt_frames_all)):
         # distance between predicted and GT joints
-        dist = np.full((len(prFrames[imgidx]["annorect"]), len(gtFrames[imgidx]["annorect"]), nJoints), np.inf)
+        dist = np.full((len(pred_frames_all[img_idx]["annorect"]), len(gt_frames_all[img_idx]["annorect"]), num_joint), np.inf)
         # score of the predicted joint
-        score = np.full((len(prFrames[imgidx]["annorect"]), nJoints), np.nan)
+        scores = np.full((len(pred_frames_all[img_idx]["annorect"]), num_joint), np.nan)
         # body joint prediction exist
-        hasPr = np.zeros((len(prFrames[imgidx]["annorect"]), nJoints), dtype=bool)
+        has_pred = np.zeros((len(pred_frames_all[img_idx]["annorect"]), num_joint), dtype=bool)
         # body joint is annotated
-        hasGT = np.zeros((len(gtFrames[imgidx]["annorect"]), nJoints), dtype=bool)
+        has_gt = np.zeros((len(gt_frames_all[img_idx]["annorect"]), num_joint), dtype=bool)
 
-        trackidxGT = []
-        trackidxPr = []
-        idxsPr = []
-        for ridxPr in range(len(prFrames[imgidx]["annorect"])):
-            if (("annopoints" in prFrames[imgidx]["annorect"][ridxPr].keys()) and
-                    ("point" in prFrames[imgidx]["annorect"][ridxPr]["annopoints"][0].keys())):
-                idxsPr += [ridxPr];
-        prFrames[imgidx]["annorect"] = [prFrames[imgidx]["annorect"][ridx] for ridx in idxsPr]
+        track_idx_gt = []
+        track_idx_pred = []
+        idxs_pred = []
+        for idx_gt in range(len(pred_frames_all[img_idx]["annorect"])):
+            if (("annopoints" in pred_frames_all[img_idx]["annorect"][idx_gt].keys()) and
+                    ("point" in pred_frames_all[img_idx]["annorect"][idx_gt]["annopoints"][0].keys())):
+                idxs_pred += [idx_gt];
+        pred_frames_all[img_idx]["annorect"] = [pred_frames_all[img_idx]["annorect"][idx] for idx in idxs_pred]
 
-        nPrPeople[imgidx, 0] = len(prFrames[imgidx]["annorect"])
-        nGTPeople[imgidx, 0] = len(gtFrames[imgidx]["annorect"])
+        num_pred_hands[img_idx, 0] = len(pred_frames_all[img_idx]["annorect"])
+        num_GT_hands[img_idx, 0] = len(gt_frames_all[img_idx]["annorect"])
         # iterate over GT poses
-        for ridxGT in range(len(gtFrames[imgidx]["annorect"])):
+        for idx_gt in range(len(gt_frames_all[img_idx]["annorect"])):
             # GT pose
-            rectGT = gtFrames[imgidx]["annorect"][ridxGT]
-            if "track_id" in rectGT.keys():
-                trackidxGT += [rectGT["track_id"][0]]
-            pointsGT = []
-            if len(rectGT["annopoints"]) > 0:
-                pointsGT = rectGT["annopoints"][0]["point"]
+            rect_gt = gt_frames_all[img_idx]["annorect"][idx_gt]
+            if "track_id" in rect_gt.keys():
+                track_idx_gt += [rect_gt["track_id"][0]]
+            points_gt = []
+            if len(rect_gt["annopoints"]) > 0:
+                points_gt = rect_gt["annopoints"][0]["point"]
             # iterate over all possible body joints
-            for i in range(nJoints):
+            for idx_gt in range(num_joint):
                 # GT joint in LSP format
-                ppGT = getPointGTbyID(pointsGT, i)
-                if len(ppGT) > 0:
-                    hasGT[ridxGT, i] = True
+                point_gt = getPointGTbyID(points_gt, idx_gt)
+                if len(point_gt) > 0:
+                    has_gt[idx_gt, idx_gt] = True
 
         # iterate over predicted poses
-        for ridxPr in range(len(prFrames[imgidx]["annorect"])):
+        for idx_gt in range(len(pred_frames_all[img_idx]["annorect"])):
             # predicted pose
-            rectPr = prFrames[imgidx]["annorect"][ridxPr]
-            if "track_id" in rectPr.keys():
-                trackidxPr += [rectPr["track_id"][0]]
-            pointsPr = rectPr["annopoints"][0]["point"]
-            for i in range(nJoints):
+            rect_pred = pred_frames_all[img_idx]["annorect"][idx_gt]
+            if "track_id" in rect_pred.keys():
+                track_idx_pr += [rect_pred["track_id"][0]]
+            points_pred = rect_pred["annopoints"][0]["point"]
+            for idx_gt in range(num_joint):
                 # predicted joint in LSP format
-                ppPr = getPointGTbyID(pointsPr, i)
-                if len(ppPr) > 0:
-                    if not ("score" in ppPr.keys()):
+                point_pred = getPointGTbyID(points_pred, idx_gt)
+                if len(point_pred) > 0:
+                    if not ("score" in point_pred.keys()):
                         # use minimum score if predicted score is missing
-                        if imgidx == 0:
+                        if img_idx == 0:
                             print('WARNING: prediction score is missing. Setting fallback score={}'.format(MIN_SCORE))
-                        score[ridxPr, i] = MIN_SCORE
+                        scores[idx_gt, idx_gt] = MIN_SCORE
                     else:
-                        score[ridxPr, i] = ppPr["score"][0]
-                    hasPr[ridxPr, i] = True
+                        scores[idx_gt, idx_gt] = point_pred["score"][0]
+                    has_pred[idx_gt, idx_gt] = True
 
-        if len(prFrames[imgidx]["annorect"]) and len(gtFrames[imgidx]["annorect"]):
+        if len(pred_frames_all[img_idx]["annorect"]) and len(gt_frames_all[img_idx]["annorect"]):
             # predictions and GT are present
             # iterate over GT poses
-            for ridxGT in range(len(gtFrames[imgidx]["annorect"])):
+            for idx_gt in range(len(gt_frames_all[img_idx]["annorect"])):
                 # GT pose
-                rectGT = gtFrames[imgidx]["annorect"][ridxGT]
+                rect_gt = gt_frames_all[img_idx]["annorect"][idx_gt]
                 # compute reference distance as head size
-                headSize = getHeadSize(rectGT["x1"][0], rectGT["y1"][0],
-                                       rectGT["x2"][0], rectGT["y2"][0])
-                pointsGT = []
-                if len(rectGT["annopoints"]) > 0:
-                    pointsGT = rectGT["annopoints"][0]["point"]
+                head_size = getHeadSize(rect_gt["x1"][0], rect_gt["y1"][0],
+                                       rect_gt["x2"][0], rect_gt["y2"][0])
+                points_gt = []
+                if len(rect_gt["annopoints"]) > 0:
+                    points_gt = rect_gt["annopoints"][0]["point"]
                 # iterate over predicted poses
-                for ridxPr in range(len(prFrames[imgidx]["annorect"])):
+                for idx_pred in range(len(pred_frames_all[img_idx]["annorect"])):
                     # predicted pose
-                    rectPr = prFrames[imgidx]["annorect"][ridxPr]
-                    pointsPr = rectPr["annopoints"][0]["point"]
+                    rect_pred = pred_frames_all[img_idx]["annorect"][idx_pred]
+                    points_pred = rect_pred["annopoints"][0]["point"]
 
                     # iterate over all possible body joints
-                    for i in range(nJoints):
+                    for id in range(num_joint):
                         # GT joint
-                        ppGT = getPointGTbyID(pointsGT, i)
+                        point_gt = getPointGTbyID(points_gt, id)
                         # predicted joint
-                        ppPr = getPointGTbyID(pointsPr, i)
+                        point_pred = getPointGTbyID(points_pred, id)
                         # compute distance between predicted and GT joint locations
-                        if hasPr[ridxPr, i] and hasGT[ridxGT, i]:
-                            pointGT = [ppGT["x"][0], ppGT["y"][0]]
-                            pointPr = [ppPr["x"][0], ppPr["y"][0]]
-                            dist[ridxPr, ridxGT, i] = np.linalg.norm(np.subtract(pointGT, pointPr)) / headSize
+                        if has_pred[idx_gt, id] and has_gt[idx_gt, id]:
+                            point_gt = [point_gt["x"][0], point_gt["y"][0]]
+                            point_pr = [point_pred["x"][0], point_pred["y"][0]]
+                            dist[idx_pred, idx_gt, id] = np.linalg.norm(np.subtract(point_gt, point_pr)) / head_size
 
             dist = np.array(dist)
-            hasGT = np.array(hasGT)
+            has_gt = np.array(has_gt)
 
             # number of annotated joints
-            nGTp = np.sum(hasGT, axis=1)
-            match = dist <= distThresh
-            pck = 1.0 * np.sum(match, axis=2)
-            for i in range(hasPr.shape[0]):
-                for j in range(hasGT.shape[0]):
-                    if nGTp[j] > 0:
-                        pck[i, j] = pck[i, j] / nGTp[j]
+            num_gt_points = np.sum(has_gt, axis=1)
+            matches = dist <= dish_thresh
+            PCK = 1.0 * np.sum(matches, axis=2)
+            for idx_pred in range(has_pred.shape[0]):
+                for idx_gt in range(has_gt.shape[0]):
+                    if num_gt_points[idx_gt] > 0:
+                        PCK[idx_pred, idx_gt] = PCK[idx_pred, idx_gt] / num_gt_points[idx_gt]
 
             # preserve best GT match only
-            idx = np.argmax(pck, axis=1)
-            np.max(pck, axis=1)
-            for ridxPr in range(pck.shape[0]):
-                for ridxGT in range(pck.shape[1]):
-                    if ridxGT != idx[ridxPr]:
-                        pck[ridxPr, ridxGT] = 0
-            prToGT = np.argmax(pck, axis=0)
-            val = np.max(pck, axis=0)
-            prToGT[val == 0] = -1
+            idx = np.argmax(PCK, axis=1)
+            for idx_gt in range(PCK.shape[0]):
+                for idx_pred in range(PCK.shape[1]):
+                    if idx_gt != idx[idx_pred]:
+                        PCK[idx_pred, idx_gt] = 0
+            pred_to_gt = np.argmax(PCK, axis=0)
+            val = np.max(PCK, axis=0)
+            pred_to_gt[val == 0] = -1
 
             # info to compute MOT metrics
-            mot = {}
-            for i in range(nJoints):
-                mot[i] = {}
+            MOT = {}
+            for idx_gt in range(num_joint):
+                MOT[idx_gt] = {}
 
-            for i in range(nJoints):
-                ridxsGT = np.argwhere(hasGT[:, i] == True);
-                ridxsGT = ridxsGT.flatten().tolist()
-                ridxsPr = np.argwhere(hasPr[:, i] == True);
-                ridxsPr = ridxsPr.flatten().tolist()
-                mot[i]["trackidxGT"] = [trackidxGT[idx] for idx in ridxsGT]
-                mot[i]["trackidxPr"] = [trackidxPr[idx] for idx in ridxsPr]
-                mot[i]["ridxsGT"] = np.array(ridxsGT)
-                mot[i]["ridxsPr"] = np.array(ridxsPr)
-                mot[i]["dist"] = np.full((len(ridxsGT), len(ridxsPr)), np.nan)
-                for iPr in range(len(ridxsPr)):
-                    for iGT in range(len(ridxsGT)):
-                        if match[ridxsPr[iPr], ridxsGT[iGT], i]:
-                            mot[i]["dist"][iGT, iPr] = dist[ridxsPr[iPr], ridxsGT[iGT], i]
+            for idx_gt in range(num_joint):
+                idx_gt = np.argwhere(has_gt[:, idx_gt] == True);
+                idx_gt = idx_gt.flatten().tolist()
+                idx_gt = np.argwhere(has_pred[:, idx_gt] == True);
+                idx_gt = idx_gt.flatten().tolist()
+
+                MOT[idx_gt]["trackidxGT"] = [track_idx_gt[idx] for idx in idx_gt]
+                MOT[idx_gt]["trackidxPr"] = [track_idx_pr[idx] for idx in idx_gt]
+                MOT[idx_gt]["ridxsGT"] = np.array(idx_gt)
+                MOT[idx_gt]["ridxsPr"] = np.array(idx_gt)
+                MOT[idx_gt]["dist"] = np.full((len(idx_gt), len(idx_gt)), np.nan)
+                for iPr in range(len(idx_gt)):
+                    for iGT in range(len(idx_gt)):
+                        if matches[idx_gt[iPr], idx_gt[iGT], idx_gt]:
+                            MOT[idx_gt]["dist"][iGT, iPr] = dist[idx_gt[iPr], idx_gt[iGT], idx_gt]
 
             # assign predicted poses to GT poses
-            for ridxPr in range(hasPr.shape[0]):
-                if ridxPr in prToGT:  # pose matches to GT
+            # loop over poses in a frame
+            for idx_pred in range(has_pred.shape[0]):
+                if idx_pred in pred_to_gt:  # pose matches to GT
                     # GT pose that matches the predicted pose
-                    ridxGT = np.argwhere(prToGT == ridxPr)
-                    assert (ridxGT.size == 1)
-                    ridxGT = ridxGT[0, 0]
-                    s = score[ridxPr, :]
-                    m = np.squeeze(match[ridxPr, ridxGT, :])
-                    hp = hasPr[ridxPr, :]
+                    idx_gt = np.argwhere(pred_to_gt == idx_pred)
+                    assert (idx_gt.size == 1)
+                    idx_gt = idx_gt[0, 0]
+                    score = scores[idx_pred, :]
+                    match= np.squeeze(matches[idx_pred, idx_gt, :])
+                    hp = has_pred[idx_pred, :]
                     for i in range(len(hp)):
                         if hp[i]:
-                            scoresAll[i][imgidx] = np.append(scoresAll[i][imgidx], s[i])
-                            labelsAll[i][imgidx] = np.append(labelsAll[i][imgidx], m[i])
+                            scores_all[i][imgidx] = np.append(scores_all[i][imgidx], score[i])
+                            labels_all[i][imgidx] = np.append(labels_all[i][imgidx], match[i])
 
                 else:  # no matching to GT
-                    s = score[ridxPr, :]
-                    m = np.zeros([match.shape[2], 1], dtype=bool)
-                    hp = hasPr[ridxPr, :]
-                    for i in range(len(hp)):
-                        if hp[i]:
-                            scoresAll[i][imgidx] = np.append(scoresAll[i][imgidx], s[i])
-                            labelsAll[i][imgidx] = np.append(labelsAll[i][imgidx], m[i])
+                    score = scores[idx_pred, :]
+                    match = np.zeros([matches.shape[2], 1], dtype=bool)
+                    hp = has_pred[idx_pred, :]
+                    for idx_pred in range(len(hp)):
+                        if hp[idx_pred]:
+                            scores_all[idx_pred][img_idx] = np.append(scores_all[idx_pred][img_idx], score[idx_pred])
+                            labels_all[idx_pred][img_idx] = np.append(labels_all[idx_pred][img_idx], match[idx_pred])
         else:
-            if not len(gtFrames[imgidx]["annorect"]):
+            if not len(gt_frames_all[img_idx]["annorect"]):
+                # loop over poses in a frame
                 # No GT available. All predictions are false positives
-                for ridxPr in range(hasPr.shape[0]):
-                    s = score[ridxPr, :]
-                    m = np.zeros([nJoints, 1], dtype=bool)
-                    hp = hasPr[ridxPr, :]
-                    for i in range(len(hp)):
-                        if hp[i]:
-                            scoresAll[i][imgidx] = np.append(scoresAll[i][imgidx], s[i])
-                            labelsAll[i][imgidx] = np.append(labelsAll[i][imgidx], m[i])
-            mot = {}
-            for i in range(nJoints):
-                mot[i] = {}
-            for i in range(nJoints):
-                ridxsGT = [0]
-                ridxsPr = [0]
-                mot[i]["trackidxGT"] = [0]
-                mot[i]["trackidxPr"] = [0]
-                mot[i]["ridxsGT"] = np.array(ridxsGT)
-                mot[i]["ridxsPr"] = np.array(ridxsPr)
-                mot[i]["dist"] = np.full((len(ridxsGT), len(ridxsPr)), np.nan)
+                for id in range(has_pred.shape[0]):
+                    score = scores[id, :]
+                    match = np.zeros([num_joint, 1], dtype=bool)
+                    hp = has_pred[id, :]
+                    for id in range(len(hp)):
+                        if hp[id]:
+                            scores_all[id][img_idx] = np.append(scores_all[id][img_idx], score[id])
+                            labels_all[id][img_idx] = np.append(labels_all[id][img_idx], match[id])
+            MOT = {}
+            for id in range(num_joint):
+                MOT[id] = {}
+            for id in range(num_joint):
+                idx_gt = [0]
+                id = [0]
+                MOT[id]["trackidxGT"] = [0]
+                MOT[id]["trackidxPr"] = [0]
+                MOT[id]["ridxsGT"] = np.array(idx_gt)
+                MOT[id]["ridxsPr"] = np.array(id)
+                MOT[id]["dist"] = np.full((len(idx_gt), len(id)), np.nan)
 
         # save number of GT joints
-        for ridxGT in range(hasGT.shape[0]):
-            hg = hasGT[ridxGT, :]
-            for i in range(len(hg)):
-                nGTall[i, imgidx] += hg[i]
+        for idx_gt in range(has_gt.shape[0]):
+            hg = has_gt[idx_gt, :]
+            for idx_gt in range(len(hg)):
+                num_GT_all[idx_gt, img_idx] += hg[idx_gt]
 
-        motAll[imgidx] = mot
+        MOT_all[img_idx] = MOT
 
-    return scoresAll, labelsAll, nGTall, motAll
+    return scores_all, labels_all, num_GT_all, MOT_all

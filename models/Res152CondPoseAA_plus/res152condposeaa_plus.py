@@ -18,11 +18,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import cv2
+import logging
+import numpy as np
 import os
 import time
-import logging
-
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -30,8 +30,6 @@ import torchvision
 from collections import OrderedDict
 
 import datasets.preprocessing_transforms as pt
-
-import cv2
 
 BN_MOMENTUM = 0.1
 logger = logging.getLogger(__name__)
@@ -165,7 +163,7 @@ resnet_spec = {18: (BasicBlock, [2, 2, 2, 2]),
                152: (Bottleneck, [3, 8, 36, 3])}
 
 
-class FlowTrack_R_GT_V5_Linear(nn.Module):
+class Res152CondPoseAA_plus(nn.Module):
 
     def __init__(self, **kwargs):
 
@@ -198,7 +196,7 @@ class FlowTrack_R_GT_V5_Linear(nn.Module):
         self.use_gt = 0  # or no priors exist
         self.use_pred = 0
 
-        super(FlowTrack_R_GT_V5_Linear, self).__init__()
+        super(Res152CondPoseAA_plus, self).__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
                                bias=False)
         self.bn1 = nn.BatchNorm2d(64, momentum=BN_MOMENTUM)
@@ -210,14 +208,14 @@ class FlowTrack_R_GT_V5_Linear(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
 
         self.sigmoid = nn.Sigmoid()
-        self.prior_attention = nn.Sequential(
-                nn.Conv2d(64 + self.num_joints, 256, kernel_size=3, padding=1, stride=1),  # 64 channels + num joints
-                nn.ReLU(),
-                nn.Conv2d(256, 256, kernel_size=2, stride=2),
-                nn.ReLU(),
-                nn.ConvTranspose2d(256, self.num_joints, kernel_size=4, padding=1, stride=2),
-                nn.ReLU()
-        )
+
+        from .model import ARB_Add
+        self.prior_attention = ARB_Add(in_channels=64 + self.num_joints,
+                                       out_channels=21,
+                                       kernel_size=3,
+                                       aug=True,
+                                       Nh=2,
+                                       shape=96)
 
         self.prior_update = nn.Sequential(  # use (weighted?) prior to update current output
                 nn.Conv2d(2 * self.num_joints, 256, kernel_size=3, padding=1, stride=1),
@@ -317,7 +315,7 @@ class FlowTrack_R_GT_V5_Linear(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x, gt_heatmap=None, x_prev=None, params=None):
+    def forward(self, x, gt_heatmap_prev=None, x_prev=None, params=None):
         outputs = []
         feats = []
         flip_pairs = [[1, 2], [3, 4], [5, 6], [7, 8],
@@ -346,11 +344,11 @@ class FlowTrack_R_GT_V5_Linear(nn.Module):
 
                     output_prev = self.forward_one(x_prev[:, :, t0], None)
 
-                    prev_heatmap = []
+                    pred_heatmap_prev = []
                     keep_priors = []
                     self.total_priors += B
-                    use_pred_prior_prob = min(1/3 * self.epoch, 1)  # probability of using prediction prior
-                    for i, hm in enumerate(output_prev):
+                    use_pred_prior_prob = min(0.10 * self.epoch, 1)  # probability of using prediction prior
+                    for i, heatmap in enumerate(output_prev):
                         if np.random.rand() > use_pred_prior_prob and load_type != 'val':
                             self.use_gt += 1
                             continue
@@ -364,125 +362,71 @@ class FlowTrack_R_GT_V5_Linear(nn.Module):
                             crop_h = y2 - y1
                             crop_w = x2 - x1
 
-                            hm.cpu()
-                            ######### For human pose
+                            heatmap.cpu()
+                            # For human pose
                             if not strides is None:
-                                hm_ = hm.permute(1, 2, 0).cpu().numpy()
+                                heatmap_ = heatmap.permute(1, 2, 0).cpu().numpy()
 
                                 if flipped[i]:
-                                    hm_ = cv2.flip(hm_, 1)
-                                hm_ = cv2.resize(hm_, dsize=(self.image_width, self.image_height), interpolation=cv2.INTER_CUBIC)
-                                hm_
+                                    heatmap_ = cv2.flip(heatmap_, 1)
+                                heatmap_ = cv2.resize(heatmap_, dsize=(self.image_width, self.image_height), interpolation=cv2.INTER_CUBIC)
 
-                                hm_ = cv2.warpAffine(hm_, inv_trans[i, 0].cpu().numpy(), (img_width.item(), img_height.item()), flags=cv2.INTER_LINEAR)
-                                hm_
-                                hm_ = cv2.warpAffine(hm_, trans[i, 0].cpu().numpy(), dsize=(self.image_width, self.image_height), flags=cv2.INTER_LINEAR)
-                                hm_ = cv2.resize(hm_, tuple(self.heatmap_size), interpolation=cv2.INTER_CUBIC)
-                                hm_
+                                heatmap_ = cv2.warpAffine(heatmap_, inv_trans[i, 0].cpu().numpy(), (img_width.item(), img_height.item()), flags=cv2.INTER_LINEAR)
+                                heatmap_ = cv2.warpAffine(heatmap_, trans[i, 0].cpu().numpy(), dsize=(self.image_width, self.image_height), flags=cv2.INTER_LINEAR)
+                                heatmap_ = cv2.resize(heatmap_, tuple(self.heatmap_size), interpolation=cv2.INTER_CUBIC)
 
                                 if flipped[i]:
-                                    hm_ = cv2.flip(hm_, 1)
-                                hm_ = torch.from_numpy(hm_).permute(2, 0, 1).to(x.device)
+                                    heatmap_ = cv2.flip(heatmap_, 1)
+                                heatmap_ = torch.from_numpy(heatmap_).permute(2, 0, 1).to(x.device)
 
-                                '''
-                                import matplotlib.pyplot as plt
-
-                                plt.subplot(2,4,1)
-                                mean = np.array([[[123.675,116.28,103.52]]])
-                                std = np.array([[[58.395,57.12,57.375]]])
-                                aux_vis = np.clip(((x_prev[i,:,0].permute(1,2,0).cpu().numpy()*std)+mean)/255,0,1)
-                                plt.imshow(aux_vis)
-
-                                plt.subplot(2,4,2)
-                                plt.imshow(torch.max(temp0, dim=0)[0].detach().numpy())
-                                plt.title('Network output')
-                                plt.subplot(2,4,3)
-                                plt.imshow(np.max(temp1, axis=-1))
-                                plt.title('Re-interpolated output')
-                                plt.subplot(2,4,4)
-                                plt.imshow(np.max(temp2, axis=-1))
-                                plt.title('Reprojected to full frame')
-                                plt.subplot(2,4,5)
-                                plt.imshow(np.max(temp3, axis=-1))
-                                plt.title('t1 resized ')
-
-                                plt.show()
-                                '''
+                            # For hand pose
                             else:
-                                ######### For hand pose
-                                hm_ = F.interpolate(hm[None], size=(crop_h, crop_w))
-                                hm_[0].cpu()
+                                heatmap_ = F.interpolate(heatmap[None], size=(crop_h, crop_w))
+                                heatmap_[0].cpu()
 
                                 pl, pt, pr, pb = prior_pads[i].tolist()
 
                                 pad_tensor = nn.ConstantPad2d((x1, max(0, ((img_width + pl + pr) - x2)), y1, max(0, ((img_height + pt + pb) - y2))), 0.0)  # pad_left, pad_right, pad_top, pad_bot
-                                hm_ = pad_tensor(hm_)  # prior hand crop reprojected onto full frame
-                                hm_[0].cpu()
+                                heatmap_ = pad_tensor(heatmap_)  # prior hand crop reprojected onto full frame
+                                heatmap_[0].cpu()
 
                                 _pb = (img_height + pt) if not pb else -pb  # check if non-zero, and adjust for array slicing
                                 _pr = (img_width + pl) if not pr else -pr
 
-                                hm_ = hm_[0][:, pt:_pb, pl:_pr]  # prior hand crop w/o padding
-                                hm_.cpu()
+                                heatmap_ = heatmap_[0][:, pt:_pb, pl:_pr]  # prior hand crop w/o padding
+                                heatmap_.cpu()
 
                                 pl, pt, pr, pb = padding[i, 0].tolist()  # current image padding
                                 x1, y1, x2, y2 = hand_crops[i, 0].tolist()  # current image hand crop
                                 # add current image padding
                                 pad_tensor = nn.ConstantPad2d((pl, pr, pt, pb), 0.0)  # pad_left, pad_right, pad_top, pad_bot
-                                hm_ = pad_tensor(hm_)  # current hand crop w/ padding (only right and bottom padding need to be added)
-                                hm_.cpu()
-                                hm_ = hm_[:, int(y1):int(y2), int(x1):int(x2)]  # current crop position
-                                hm_.cpu()
-                                hm_ = F.interpolate(hm_[:, None], size=self.heatmap_size)[:, 0]  # resized to heatmap size
-                                hm_.cpu()
+                                heatmap_ = pad_tensor(heatmap_)  # current hand crop w/ padding (only right and bottom padding need to be added)
+                                heatmap_.cpu()
+                                heatmap_ = heatmap_[:, int(y1):int(y2), int(x1):int(x2)]  # current crop position
+                                heatmap_.cpu()
+                                heatmap_ = F.interpolate(heatmap_[:, None], size=self.heatmap_size)[:, 0]  # resized to heatmap size
+                                heatmap_.cpu()
 
-                                '''
-                                import matplotlib.pyplot as plt
-
-                                plt.subplot(2,4,1)
-                                plt.imshow(torch.max(temp0, dim=0)[0].detach().numpy(),vmin=0, vmax=1)
-                                plt.title('Network output')
-                                plt.subplot(2,4,2)
-                                plt.imshow(torch.max(temp1, dim=0)[0].detach().numpy(),vmin=0, vmax=1)
-                                plt.title('Re-interpolated output')
-                                plt.subplot(2,4,3)
-                                plt.imshow(torch.max(temp2, dim=0)[0].detach().numpy(),vmin=0, vmax=1)
-                                plt.title('Reprojected to full frame')
-                                plt.subplot(2,4,4)
-                                plt.imshow(torch.max(temp3, dim=0)[0].detach().numpy(),vmin=0, vmax=1)
-                                plt.title('Removed padding')
-
-                                plt.subplot(2,4,6)
-                                plt.imshow(torch.max(temp4, dim=0)[0].detach().numpy(),vmin=0, vmax=1)
-                                plt.title('full image with padding')
-                                plt.subplot(2,4,7)
-                                plt.imshow(torch.max(temp5, dim=0)[0].detach().numpy(),vmin=0, vmax=1)
-                                plt.title('t1 hand crop')
-                                plt.subplot(2,4,8)
-                                plt.imshow(torch.max(temp6, dim=0)[0].detach().numpy(),vmin=0, vmax=1)
-                                plt.title('t1 resized to heatmap size')
-                                plt.show()
-                                '''
                         else:
-                            hm_ = hm
+                            heatmap_ = heatmap
 
-                        prev_heatmap.append(hm_)
+                        pred_heatmap_prev.append(heatmap_)
                         keep_priors.append(i)
 
                     # Replace corresponding minibatch prior with minibatch in gt_heatmap
-                    if len(prev_heatmap) > 0:
-                        prev_heatmap = torch.stack(prev_heatmap).to(x.device)
-                        gt_heatmap[keep_priors, t0] = prev_heatmap
+                    if len(pred_heatmap_prev) > 0:
+                        pred_heatmap_prev = torch.stack(pred_heatmap_prev).to(x.device)
+                        gt_heatmap_prev[keep_priors, t0] = pred_heatmap_prev
 
-            if gt_heatmap is not None:
-                output = self.forward_one(x[:, :, t1], gt_heatmap[:, t0])
+            if gt_heatmap_prev is not None:
+                output = self.forward_one(x[:, :, t1], gt_heatmap_prev[:, t0])
             else:
                 output = self.forward_one(x[:, :, t1], None)
 
             if test:
-                input_flipped = np.flip(input.cpu().numpy(), 3).copy()
+                input_flipped = np.flip(x.cpu().numpy(), 3).copy()
                 input_flipped = torch.from_numpy(input_flipped).cuda()
-                output_flipped = self.forward_one(input_flipped)
+                output_flipped = self.forward_one(input_flipped, None)
                 output_flipped = flip_back(output_flipped.cpu().numpy(),
                                            flip_pairs)
                 output_flipped = torch.from_numpy(output_flipped.copy()).cuda()
@@ -494,7 +438,6 @@ class FlowTrack_R_GT_V5_Linear(nn.Module):
                 out = (output + output_flipped) * 0.5
             else:
                 out = output
-
             if self.save_feat or self.out_feat:
                 outputs.append(out[0])
                 feats.append(out[1])
@@ -506,91 +449,45 @@ class FlowTrack_R_GT_V5_Linear(nn.Module):
         else:
             return torch.stack(outputs, dim=1)
 
-    def forward_one(self, x1, x0):
-        B, C, H, W = x1.shape
+    def forward_one(self, x, heatmap_prev):
+        B, C, H, W = x.shape
         H_ = self.heatmap_size[1]
         W_ = self.heatmap_size[0]
 
-        if x0 is None:
-            x0 = torch.zeros(B, self.num_joints, H_, W_).to(x1.device)
+        if heatmap_prev is None:
+            heatmap_prev = torch.zeros(B, self.num_joints, H_, W_).to(x.device)
 
-        x1.cpu()
+        x.cpu()
 
-        x1 = self.conv1(x1)
-        x1 = self.bn1(x1)
-        x1 = self.relu(x1)
-        x1 = self.maxpool(x1)
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
 
-        vis = x1.clone()  # (B,64,H_,W_)
-        if vis.shape[2] != H_ or vis.shape[3] != W_:
-            vis = F.interpolate(vis, size=(H_, W_))
+        visual_features = x.clone()  # (B,64,H_,W_)
+        if visual_features.shape[2] != H_ or visual_features.shape[3] != W_:
+            visual_features = F.interpolate(visual_features, size=(H_, W_))
 
-        x1 = self.layer1(x1)
-        x1 = self.layer2(x1)
-        x1 = self.layer3(x1)
-        x1 = self.layer4(x1)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
 
-        x1 = self.deconv_layers(x1)
-        x1 = self.final_layer(x1)
+        x = self.deconv_layers(x)
+        x = self.final_layer(x)
 
         # Add 1x1 convolution + non-linearity
-        torch.max(x0, dim=1)[0].cpu().numpy()
-        x0 = torch.cat((vis, x0), dim=1)
-        x0 = self.prior_attention(x0)
-        torch.max(x0, dim=1)[0].cpu().detach().numpy()
-
-        torch.max(x1, dim=1)[0].cpu().detach().numpy()
-        x1 = torch.cat((x1, x0), dim=1)
-        x1 = self.prior_update(x1)
-
-        '''
-        import matplotlib.pyplot as plt 
-        plt.figure(figsize=(18, 10))
-
-        rr = len(x1)
-        for ii in range(rr):
-            plt.subplot(rr,5,(5*ii) + 1)
-            plt.title('heatmap prior t-1')
-            plt.imshow(x0_0[ii], vmin=0, vmax=1)
-            #plt.colorbar()
-
-            plt.subplot(rr,5,(5*ii) + 2)
-            plt.title('cropped image')
-            extent = np.int(0), np.int(W), np.int(0), np.int(H)
-            mean = np.array([[[123.675,116.28,103.52]]])
-            std  = np.array([[[58.395,57.12,57.375]]])
-            _vis  = np.clip(((x1_0[ii].permute(1,2,0).numpy()*std)+mean)/255,0,1)
-            plt.imshow(_vis, interpolation='none', extent=extent)
-            #plt.imshow(x0_0[ii], cmap='jet', alpha=0.5, interpolation='none', extent=extent)
-
-            plt.subplot(rr,5,(5*ii) + 3)
-            plt.title('modified heatmap t-1')
-            plt.imshow(x0_1[ii])
-            #plt.colorbar()
-
-            plt.subplot(rr,5,(5*ii) + 4)
-            plt.title('heatmap t')
-            plt.imshow(x1_1[ii])
-            #plt.colorbar()
-
-            plt.subplot(rr,5,(5*ii) + 5)
-            plt.title('final heatmap t')
-            plt.imshow(_vis, interpolation='none', extent=extent)
-            plt.imshow(torch.max(x1[ii], dim=0)[0].cpu().detach().numpy(),vmin=0, vmax=1, cmap='jet', alpha=0.25, interpolation='none', extent=extent)
-            #plt.colorbar()
-        plt.show()
-        #os.makedirs('./eval_vis_outputs', exist_ok=True)
-        #filename = str(params['frame_id'])+'_'+str(params['batch_num'])+'.png'
-        #plt.savefig('./eval_vis_outputs/'+filename)
-        #plt.close()
-        '''
+        heatmap_prev = torch.cat((visual_features, heatmap_prev), dim=1)
+        heatmap_prev = self.prior_attention(heatmap_prev)
+        x = torch.cat((x, heatmap_prev), dim=1)
+        x = self.prior_update(x)
 
         if self.save_feat or self.out_feat:
-            vis = self.pooling(vis)
-            vis = torch.flatten(vis,1)
-            return x1, vis
+            visual_features = self.pooling(visual_features)
+            visual_features = torch.flatten(visual_features, 1)
+            return x, visual_features
         else:
-            return x1
+            return x
 
     def init_weights(self, pretrained='./weights/resnet152-b121ed2d.pth'):
         if os.path.isfile(pretrained):
@@ -616,7 +513,7 @@ class FlowTrack_R_GT_V5_Linear(nn.Module):
                     nn.init.normal_(m.weight, std=0.001)
                     nn.init.constant_(m.bias, 0)
 
-            pretrained_state_dict = torch.load(pretrained)
+            pretrained_state_dict = torch.load(pretrained, map_location=torch.device('cpu'))
             logger.info('=> loading pretrained model {}'.format(pretrained))
 
             # NOTE: Some changes to loading ImageNet weights
@@ -763,8 +660,8 @@ class PreprocessTrainFlowTrack(object):
         Initialize preprocessing class for training set
         Args:
                 transform._update_bbox(bbox_data[0], bbox_data[2], bbox_data[1], bbox_data[3], True)
-            preprocess (String): Keyword to select different preprocessing types            
-            crop_type  (String): Select random or central crop 
+            preprocess (String): Keyword to select different preprocessing types
+            crop_type  (String): Select random or central crop
 
         Return:
             None
@@ -820,8 +717,8 @@ class PreprocessEvalFlowTrack(object):
         """
         Initialize preprocessing class for training set
         Args:
-            preprocess (String): Keyword to select different preprocessing types            
-            crop_type  (String): Select random or central crop 
+            preprocess (String): Keyword to select different preprocessing types
+            crop_type  (String): Select random or central crop
 
         Return:
             None
@@ -930,13 +827,13 @@ class PreprocessTrainHand(object):
         """
         Preprocess the clip and the bbox data accordingly
         Args:
-            input_data: List of PIL images containing clip frames 
-            bbox_data:  Numpy array containing bbox coordinates per object per frame 
+            input_data: List of PIL images containing clip frames
+            bbox_data:  Numpy array containing bbox coordinates per object per frame
             hand_crop:  Region (around hand) to crop from input image
-            label:      Is left hand 
+            label:      Is left hand
 
         Return:
-            input_data: Pytorch tensor containing the processed clip data 
+            input_data: Pytorch tensor containing the processed clip data
             bbox_data:  Numpy tensor containing the augmented bbox coordinates
         """
 

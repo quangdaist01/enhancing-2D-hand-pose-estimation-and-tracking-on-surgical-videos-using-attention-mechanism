@@ -7,41 +7,43 @@ import eval_helpers
 from eval_helpers import Joint
 
 
-def computeMetrics(scoresAll, labelsAll, nGTall):
-    apAll = np.zeros((nGTall.shape[0] + 1, 1))
-    recAll = np.zeros((nGTall.shape[0] + 1, 1))
-    preAll = np.zeros((nGTall.shape[0] + 1, 1))
+def computeMetrics(scores_all, labels_all, num_gt_all):
+    ap_all = np.zeros((num_gt_all.shape[0] + 1, 1))
+    rec_all = np.zeros((num_gt_all.shape[0] + 1, 1))
+    pre_all = np.zeros((num_gt_all.shape[0] + 1, 1))
     # iterate over joints
-    for j in range(nGTall.shape[0]):
+    for j in range(num_gt_all.shape[0]):
         scores = np.zeros([0, 0], dtype=np.float32)
         labels = np.zeros([0, 0], dtype=np.int8)
         # iterate over images
-        for imgidx in range(nGTall.shape[1]):
-            scores = np.append(scores, scoresAll[j][imgidx])
-            labels = np.append(labels, labelsAll[j][imgidx])
+        for imgidx in range(num_gt_all.shape[1]):
+            scores = np.append(scores, scores_all[j][imgidx])
+            labels = np.append(labels, labels_all[j][imgidx])
         # compute recall/precision values
-        nGT = sum(nGTall[j, :])
-        precision, recall, scoresSortedIdxs = eval_helpers.computeRPC(scores, labels, nGT)
+        n_gt = sum(num_gt_all[j, :])
+        precision, recall, scores_sorted_idxs = eval_helpers.computeRPC(scores, labels, n_gt)
         if len(precision) > 0:
-            apAll[j] = eval_helpers.VOCap(recall, precision) * 100
-            preAll[j] = precision[len(precision) - 1] * 100
-            recAll[j] = recall[len(recall) - 1] * 100
-    idxs = np.argwhere(~np.isnan(apAll[:nGTall.shape[0], 0]))
-    apAll[nGTall.shape[0]] = apAll[idxs, 0].mean()
-    idxs = np.argwhere(~np.isnan(recAll[:nGTall.shape[0], 0]))
-    recAll[nGTall.shape[0]] = recAll[idxs, 0].mean()
-    idxs = np.argwhere(~np.isnan(preAll[:nGTall.shape[0], 0]))
-    preAll[nGTall.shape[0]] = preAll[idxs, 0].mean()
+            ap_all[j] = eval_helpers.VOCap(recall, precision) * 100
+            pre_all[j] = precision[len(precision) - 1] * 100
+            rec_all[j] = recall[len(recall) - 1] * 100
 
-    return apAll, preAll, recAll
+    # mean cuối cùng ở phần từ cuối cùng
+    idxs = np.argwhere(~np.isnan(ap_all[:num_gt_all.shape[0], 0]))
+    ap_all[num_gt_all.shape[0]] = ap_all[idxs, 0].mean()
+    idxs = np.argwhere(~np.isnan(rec_all[:num_gt_all.shape[0], 0]))
+    rec_all[num_gt_all.shape[0]] = rec_all[idxs, 0].mean()
+    idxs = np.argwhere(~np.isnan(pre_all[:num_gt_all.shape[0], 0]))
+    pre_all[num_gt_all.shape[0]] = pre_all[idxs, 0].mean()
+
+    return ap_all, pre_all, rec_all
 
 
-def evaluateAP(gtFramesAll, prFramesAll, outputDir, bSaveAll=True, bSaveSeq=False):
-    distThresh = 0.5
+def evaluateAP(gt_frames_all, pred_frames_all, output_dir, bSaveAll=True, bSaveSeq=False):
+    dist_thresh = 0.5
 
     seqidxs = []
-    for imgidx in range(len(gtFramesAll)):
-        seqidxs += [gtFramesAll[imgidx]["seq_id"]]
+    for imgidx in range(len(gt_frames_all)):
+        seqidxs += [gt_frames_all[imgidx]["seq_id"]]
     seqidxs = np.array(seqidxs)
 
     seqidxsUniq = np.unique(seqidxs)
@@ -56,33 +58,33 @@ def evaluateAP(gtFramesAll, prFramesAll, outputDir, bSaveAll=True, bSaveSeq=Fals
 
             # extract frames IDs for the sequence
             imgidxs = np.argwhere(seqidxs == seqidxsUniq[si])
-            seqName = gtFramesAll[imgidxs[0, 0]]["seq_name"]
+            seq_name = gt_frames_all[imgidxs[0, 0]]["seq_name"]
 
-            gtFrames = [gtFramesAll[imgidx] for imgidx in imgidxs.flatten().tolist()]
-            prFrames = [prFramesAll[imgidx] for imgidx in imgidxs.flatten().tolist()]
+            gt_frames = [gt_frames_all[imgidx] for imgidx in imgidxs.flatten().tolist()]
+            pred_frames = [pred_frames_all[imgidx] for imgidx in imgidxs.flatten().tolist()]
 
             # assign predicted poses to GT poses
             # scores: part detections scores
             # labels: positive/negative labels
             # nGT: number of annotated joints per image
-            scores, labels, nGT, _ = eval_helpers.assignGTmulti(gtFrames, prFrames, distThresh)
+            scores, labels, num_gt, _ = eval_helpers.assignGTmulti(gt_frames, pred_frames, dist_thresh)
 
             # compute average precision (AP), precision and recall per part
-            ap, pre, rec = computeMetrics(scores, labels, nGT)
-            metricsSeq = {'ap': ap.flatten().tolist(), 'pre': pre.flatten().tolist(), 'rec': rec.flatten().tolist(), 'names': names}
+            ap, precision, recall = computeMetrics(scores, labels, num_gt)
+            metricsSeq = {'ap': ap.flatten().tolist(), 'pre': precision.flatten().tolist(), 'rec': recall.flatten().tolist(), 'names': names}
 
-            filename = outputDir + '/' + seqName + '_AP_metrics.json'
+            filename = output_dir + '/' + seq_name + '_AP_metrics.json'
             print('saving results to', filename)
             eval_helpers.writeJson(metricsSeq, filename)
 
     # assign predicted poses to GT poses
-    scoresAll, labelsAll, nGTall, _ = eval_helpers.assignGTmulti(gtFramesAll, prFramesAll, distThresh)
+    scoresAll, labelsAll, nGTall, _ = eval_helpers.assignGTmulti(gt_frames_all, pred_frames_all, dist_thresh)
 
     # compute average precision (AP), precision and recall per part
     apAll, preAll, recAll = computeMetrics(scoresAll, labelsAll, nGTall)
     if bSaveAll:
         metrics = {'ap': apAll.flatten().tolist(), 'pre': preAll.flatten().tolist(), 'rec': recAll.flatten().tolist(), 'names': names}
-        filename = outputDir + '/total_AP_metrics.json'
+        filename = output_dir + '/total_AP_metrics.json'
         print('saving results to', filename)
         eval_helpers.writeJson(metrics, filename)
 
