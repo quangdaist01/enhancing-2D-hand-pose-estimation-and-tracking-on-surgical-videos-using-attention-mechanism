@@ -234,7 +234,16 @@ class SERes152CondPoseSE(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
 
         self.sigmoid = nn.Sigmoid()
-        self.prior_attention = SELayer(21)
+        self.prior_attention = nn.Sequential(
+                nn.Conv2d(64 + self.num_joints, 256, kernel_size=3, padding=1, stride=1),  # 64 channels + num joints
+                nn.ReLU(),
+                nn.Conv2d(256, 256, kernel_size=2, stride=2),
+                nn.ReLU(),
+                nn.ConvTranspose2d(256, self.num_joints, kernel_size=4, padding=1, stride=2),
+                nn.ReLU(),
+                SELayer(21)
+        )
+
         self.prior_update = nn.Sequential(  # use (weighted?) prior to update current output
                 nn.Conv2d(2 * self.num_joints, 256, kernel_size=3, padding=1, stride=1),
                 nn.ReLU(),
