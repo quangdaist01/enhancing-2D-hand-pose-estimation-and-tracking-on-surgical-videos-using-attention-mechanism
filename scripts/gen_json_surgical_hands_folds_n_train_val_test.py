@@ -7,10 +7,18 @@ import numpy as np
 import os
 from PIL import Image
 
-source_json_file = '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/annotations.json'
-source_res_dir = '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/images'
-target_json_dir = '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/pub_surgical/'
-target_poseval_dir = '/content/drive/MyDrive/DoAn/SurgicalHands/surgical_hands_release/poseval_hand/py'  # TODO: Replace with poseval code
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("source_json_file", help="path to the annotations.json file")
+parser.add_argument("source_res_dir", help="path to the images folder")
+parser.add_argument("target_json_dir", help="path to the target (splitted) json file")
+parser.add_argument("target_poseval_dir", help="path to the poseval directory")
+args = parser.parse_args()
+
+source_json_file = args.source_json_file
+source_res_dir = args.source_res_file
+target_json_dir = args.target_json_dir
+target_poseval_dir = args.target_poseval_dir
 
 # certain factors (poseval) requires numeric video names
 vid2idx = {'fTFTk_q8dh0': '000001'
