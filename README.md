@@ -42,7 +42,9 @@ For evaluation, we modify the [Poseval Evaluation repository](https://github.com
 - (Our models) `python eval_cycle.py --cfg_file cfgs/config_eval_surgical_hands.yaml --json_path ./data/pub_surgical/annotations_folda99 --tags folda99 --pretrained ./weights/(your model weights) --acc_metric Save_Video_Keypoints`
 
 ### Demo
-![y2mate.com---SERes152CondPoseSE-Ours-and-Res152CondPose-Baseline-on-Surgical-Hands-dataset_1080p.gif](https://s4.gifyu.com/images/y2mate.com---SERes152CondPoseSE-Ours-and-Res152CondPose-Baseline-on-Surgical-Hands-dataset_1080p.gif)
+<p align="center">
+  <img src="https://s4.gifyu.com/images/ezgif.com-gif-maker0bdaefd8efc86eba.gif" alt="animated" />
+</p>
 
 
 ### References
